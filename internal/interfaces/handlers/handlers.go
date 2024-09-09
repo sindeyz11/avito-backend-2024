@@ -1,14 +1,29 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"tenders/internal/domain/dto"
 )
+
+func HandleError(w http.ResponseWriter, statusCode int, errorMsg string) {
+	j, err := json.Marshal(dto.ErrorResponse{Reason: errorMsg})
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(statusCode)
+
+	_, _ = w.Write(j)
+}
 
 func Ping(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusBadRequest)
+		HandleError(w, 400, "Добавить константу")
 		return
 	}
 
