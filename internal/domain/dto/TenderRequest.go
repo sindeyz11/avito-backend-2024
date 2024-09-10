@@ -18,7 +18,11 @@ type TenderRequest struct {
 func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 	var errorFields []string
 
-	if len(tenderRequest.Description) > 500 {
+	if tenderRequest.Name == "" || len(tenderRequest.Name) > 100 {
+		errorFields = append(errorFields, "name")
+	}
+
+	if tenderRequest.Description == "" || len(tenderRequest.Description) > 500 {
 		errorFields = append(errorFields, "description")
 	}
 
@@ -27,6 +31,16 @@ func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 		tenderRequest.ServiceType != entity.MANUFACTURE {
 		errorFields = append(errorFields, "serviceType")
 	}
+
+	if tenderRequest.Status != entity.CREATED &&
+		tenderRequest.Status != entity.PUBLISHED &&
+		tenderRequest.Status != entity.CLOSED {
+		errorFields = append(errorFields, "status")
+	}
+
+	//if tenderRequest.OrganizationID.String() == "" {
+	//	errorFields = append(errorFields, "organizationID")
+	//}
 
 	if len(errorFields) > 0 {
 		return nil, utils.NewValidationError(errorFields)

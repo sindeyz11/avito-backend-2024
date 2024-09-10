@@ -7,8 +7,7 @@ import (
 
 type TenderRepository interface {
 	Create(tender *entity.Tender) (*entity.Tender, error)
-	FindByEmployeeUsername(username string) (*entity.Tender, error)
-	FindAll() ([]*entity.Tender, error)
-	Update(tender *entity.Tender) (*entity.Tender, error)
-	Delete(id uuid.UUID) error
+	FindAllByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error)
+	FindAll(serviceTypes []string, limit, offset int) ([]entity.Tender, error)
+	FindByTenderId(id uuid.UUID) (*entity.Tender, error)
 }

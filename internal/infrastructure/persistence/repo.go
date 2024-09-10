@@ -3,7 +3,6 @@ package persistence
 import (
 	"database/sql"
 	"tenders/internal/domain/repository"
-	"tenders/internal/infrastructure/persistence/repository_impl"
 )
 
 type Repositories struct {
@@ -14,8 +13,8 @@ type Repositories struct {
 
 func NewRepositories(conn *sql.DB) *Repositories {
 	return &Repositories{
-		TenderRepo:   repository_impl.NewTenderRepository(conn),
-		EmployeeRepo: repository_impl.NewEmployeeRepository(conn),
+		TenderRepo:   NewTenderRepository(conn),
+		EmployeeRepo: NewEmployeeRepository(conn),
 		Db:           conn,
 	}
 }

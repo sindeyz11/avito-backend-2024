@@ -40,6 +40,7 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 		os.Getenv("POSTGRES_DATABASE")+"\n"+
 		"values")
 	if err != nil {
+		// TODO обработка internal
 		return
 	}
 }

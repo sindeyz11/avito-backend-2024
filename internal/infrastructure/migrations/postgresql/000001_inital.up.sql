@@ -55,6 +55,7 @@ CREATE TYPE tender_service_type AS ENUM (
 CREATE TABLE IF NOT EXISTS tender
 (
     id              UUID PRIMARY KEY             DEFAULT uuid_generate_v4(),
+    tender_id       UUID                         DEFAULT uuid_generate_v4() NOT NULL,
     name            VARCHAR(100)        NOT NULL,
     description     VARCHAR(500),
     service_type    tender_service_type NOT NULL,
@@ -63,5 +64,5 @@ CREATE TABLE IF NOT EXISTS tender
     organization_id UUID REFERENCES organization (id) ON DELETE CASCADE,
     creator_id      UUID                REFERENCES employee (id) ON DELETE SET NULL,
     created_at      TIMESTAMP                    DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP                    DEFAULT CURRENT_TIMESTAMP
+    UNIQUE (tender_id, version)
 );

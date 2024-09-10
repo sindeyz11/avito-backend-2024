@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"github.com/google/uuid"
 	"net/http"
+	"strings"
 	"tenders/internal/application/interfaces"
 	"tenders/internal/domain/dto"
+	"tenders/internal/utils"
 	"tenders/internal/utils/consts"
 )
 
@@ -20,34 +25,163 @@ func NewTenderHandler(
 	}
 }
 
-func (c *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		HandleError(w, 405, consts.MethodNotAllowed)
-		return
-	}
-
-	tenderRequest := dto.TenderRequest{}
-
+func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
+	var tenderRequest dto.TenderRequest
 	err := json.NewDecoder(r.Body).Decode(&tenderRequest)
 	if err != nil {
-		HandleError(w, 400, consts.IncorrectRequestBody)
+		HandleError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}
 
-	tender, err := c.service.CreateTender(&tenderRequest)
-
+	tender, err := h.service.Create(&tenderRequest)
 	if err != nil {
-		var statusCode int
-		if err.Error() == consts.UserNotExistsError {
-			statusCode = 401
-			HandleError(w, statusCode, consts.UserNotExists)
+		// TODO в первом ифе может быть ситуация когда ввели рандомную оргу
+		if err.Error() == consts.CannotFindUserError {
+			HandleError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else if strings.HasPrefix(err.Error(), "Неправильно") {
+			HandleError(w, http.StatusBadRequest, err.Error())
 		} else {
-			statusCode = 400
-			HandleError(w, statusCode, err.Error())
+			HandleError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(tender)
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(tender); err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.InternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
+	serviceTypeFilter, err := utils.GetServiceTypeFilter(r)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	limit, offset, err := utils.GetPaginationParams(r)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, consts.IncorrectLimitOffsetParams)
+		return
+	}
+
+	// TODO только published
+	tenders, err := h.service.FindAll(serviceTypeFilter, limit, offset)
+	if err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.InternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(tenders); err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.Request) {
+	employeeUsername := r.URL.Query().Get("username")
+	if employeeUsername == "" {
+		HandleError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	limit, offset, err := utils.GetPaginationParams(r)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, consts.IncorrectLimitOffsetParams)
+		return
+	}
+
+	tenders, err := h.service.FindAllByEmployeeUsername(employeeUsername, limit, offset)
+	if err != nil {
+		if err.Error() == consts.UserNotExistsError {
+			HandleError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			HandleError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(tenders); err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.InternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Request) {
+	tenderIdStr := r.PathValue("tenderId")
+	tenderId, err := uuid.Parse(tenderIdStr)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, consts.IncorrectTenderId)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+
+	status, err := h.service.GetStatusByTenderId(tenderId, username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			HandleError(w, http.StatusNotFound, consts.TenderNotExists)
+		} else if errors.Is(err, utils.ErrUnauthorizedAccess) {
+			HandleError(w, http.StatusForbidden, consts.StatusForbidden)
+		} else if err.Error() == consts.UserNotExistsError {
+			HandleError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			HandleError(w, http.StatusInternalServerError, consts.InternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(status)); err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
+	}
+}
+
+func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Request) {
+	tenderIdStr := r.PathValue("tenderId")
+	tenderId, err := uuid.Parse(tenderIdStr)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, consts.IncorrectTenderId)
+		return
+	}
+
+	status := r.URL.Query().Get("status")
+	err = utils.ValidateTenderStatus(status)
+	if status == "" || err != nil {
+		HandleError(w, http.StatusBadRequest, consts.IncorrectTenderStatus)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		HandleError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	tender, err := h.service.UpdateStatus(tenderId, status, username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			HandleError(w, http.StatusNotFound, consts.TenderNotExists)
+		} else if errors.Is(err, utils.ErrUnauthorizedAccess) {
+			HandleError(w, http.StatusForbidden, consts.StatusForbidden)
+		} else if err.Error() == consts.UserNotExistsError {
+			HandleError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			HandleError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(tender); err != nil {
+		HandleError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
+	}
 }

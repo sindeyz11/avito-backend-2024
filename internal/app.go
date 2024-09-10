@@ -22,7 +22,11 @@ func Run() {
 	tenderController := handlers.NewTenderHandler(tenderService)
 
 	mux.HandleFunc("/api/ping", handlers.Ping)
-	mux.HandleFunc("/api/tenders/new", tenderController.CreateTender)
+	mux.HandleFunc("POST /api/tenders/new", tenderController.CreateTender)
+	mux.HandleFunc("GET /api/tenders", tenderController.GetAllTenders)
+	mux.HandleFunc("GET /api/tenders/my", tenderController.GetAllTendersByUsername)
+	mux.HandleFunc("GET /api/tenders/{tenderId}/status", tenderController.GetTenderStatusById)
+	mux.HandleFunc("PUT /api/tenders/{tenderId}/status", tenderController.UpdateTenderStatusById)
 
 	fmt.Printf("Starting server at port 8080\nhttp://127.0.0.1:8080/\n")
 
