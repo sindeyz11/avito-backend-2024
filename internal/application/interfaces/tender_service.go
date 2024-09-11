@@ -16,6 +16,6 @@ type TenderService interface {
 	UpdateStatus(tenderId uuid.UUID, status, username string) (*entity.Tender, error)
 	FindByTenderId(tenderId uuid.UUID) (*entity.Tender, error)
 	VerifyUserResponsibleForOrg(username string, organizationId uuid.UUID) (uuid.UUID, error)
-	GetTenderByVersion(tenderId uuid.UUID, version int) (*entity.Tender, error)
+	GetTenderVersion(tenderId uuid.UUID, version int) (*entity.Tender, error)
 	RollbackTender(tenderId uuid.UUID, version int, username string) (*entity.Tender, error)
 }

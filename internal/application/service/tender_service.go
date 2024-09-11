@@ -71,7 +71,7 @@ func (s *TenderService) GetStatusByTenderId(tenderId uuid.UUID, username string)
 
 	if username == "" {
 		if tender.Status != entity.PUBLISHED {
-			return "", utils.ErrUnauthorizedAccess
+			return "", utils.ErrorUnauthorizedAccess
 		}
 		return tender.Status, nil
 	}
@@ -82,7 +82,7 @@ func (s *TenderService) GetStatusByTenderId(tenderId uuid.UUID, username string)
 		if errEmployeeNotExists != nil {
 			return "", errEmployeeNotExists
 		}
-		return "", utils.ErrUnauthorizedAccess
+		return "", utils.ErrorUnauthorizedAccess
 	}
 
 	return tender.Status, nil
@@ -114,7 +114,7 @@ func (s *TenderService) UpdateStatus(tenderId uuid.UUID, status, username string
 		if errEmployeeNotExists != nil {
 			return nil, errors.New(consts.UserNotExistsError)
 		}
-		return nil, utils.ErrUnauthorizedAccess
+		return nil, utils.ErrorUnauthorizedAccess
 	}
 
 	tender.Status = status
@@ -138,14 +138,14 @@ func (s *TenderService) VerifyUserResponsibleForOrg(username string, organizatio
 	return s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, organizationId)
 }
 
-func (s *TenderService) GetTenderByVersion(tenderId uuid.UUID, version int) (*entity.Tender, error) {
+func (s *TenderService) GetTenderVersion(tenderId uuid.UUID, version int) (*entity.Tender, error) {
 	return s.tenderRepo.FindByTenderIdAndVersion(tenderId, version)
 }
 
 // todo после рефакторинга
 func (s *TenderService) RollbackTender(tenderId uuid.UUID, version int, username string) (*entity.Tender, error) {
 	// Получаем тендер по ID и версии
-	tender, err := s.GetTenderByVersion(tenderId, version)
+	tender, err := s.GetTenderVersion(tenderId, version)
 	if err != nil {
 		return nil, err
 	}

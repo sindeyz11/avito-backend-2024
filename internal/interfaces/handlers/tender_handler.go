@@ -47,12 +47,7 @@ func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(tender); err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	common.RespondWithJson(w, http.StatusOK, tender)
 }
 
 func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
@@ -79,8 +74,8 @@ func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.Request) {
-	employeeUsername := r.URL.Query().Get("username")
-	if employeeUsername == "" {
+	username := r.URL.Query().Get("username")
+	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
 		return
 	}
@@ -91,9 +86,9 @@ func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	tenders, err := h.service.FindAllByEmployeeUsername(employeeUsername, limit, offset)
+	tenders, err := h.service.FindAllByEmployeeUsername(username, limit, offset)
 	if err != nil {
-		if errors.Is(err, utils.ErrElementNotExist) {
+		if errors.Is(err, utils.ErrorElementNotExist) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
 			common.RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -101,12 +96,7 @@ func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(tenders); err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	common.RespondWithJson(w, http.StatusOK, tenders)
 }
 
 func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +113,7 @@ func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
-		} else if errors.Is(err, utils.ErrUnauthorizedAccess) {
+		} else if errors.Is(err, utils.ErrorUnauthorizedAccess) {
 			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
 		} else if err.Error() == consts.UserNotExistsError {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
@@ -164,7 +154,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
-		} else if errors.Is(err, utils.ErrUnauthorizedAccess) {
+		} else if errors.Is(err, utils.ErrorUnauthorizedAccess) {
 			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
 		} else if err.Error() == consts.UserNotExistsError {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
@@ -174,11 +164,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(tender); err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
-	}
-	w.WriteHeader(http.StatusOK)
+	common.RespondWithJson(w, http.StatusOK, tender)
 }
 
 func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +188,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 
 	tender, err := h.service.FindByTenderId(tenderId)
 	if err != nil {
-		if errors.Is(err, utils.ErrElementNotExist) {
+		if errors.Is(err, utils.ErrorElementNotExist) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
 		} else {
 			common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
@@ -212,9 +198,9 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 
 	_, err = h.service.VerifyUserResponsibleForOrg(username, tender.OrganizationID)
 	if err != nil {
-		if errors.Is(err, utils.ErrUnauthorizedAccess) {
+		if errors.Is(err, utils.ErrorUnauthorizedAccess) {
 			http.Error(w, "Forbidden: you are not responsible for this organization", http.StatusForbidden)
-		} else if errors.Is(err, utils.ErrElementNotExist) {
+		} else if errors.Is(err, utils.ErrorElementNotExist) {
 			http.Error(w, "User not found", http.StatusUnauthorized)
 		} else {
 			// todo fix
@@ -234,11 +220,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(updatedTender); err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
-	}
-	w.WriteHeader(http.StatusOK)
+	common.RespondWithJson(w, http.StatusOK, updatedTender)
 }
 
 func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +242,7 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.service.GetTenderByVersion(tenderId, version)
+	tender, err := h.service.GetTenderVersion(tenderId, version)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderOrVersionNotExists)
@@ -272,9 +254,9 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 
 	_, err = h.service.VerifyUserResponsibleForOrg(username, tender.OrganizationID)
 	if err != nil {
-		if errors.Is(err, utils.ErrUnauthorizedAccess) {
+		if errors.Is(err, utils.ErrorUnauthorizedAccess) {
 			http.Error(w, "Forbidden: you are not responsible for this organization", http.StatusForbidden)
-		} else if errors.Is(err, utils.ErrElementNotExist) {
+		} else if errors.Is(err, utils.ErrorElementNotExist) {
 			http.Error(w, "User not found", http.StatusUnauthorized)
 		} else {
 			// todo fix
@@ -289,9 +271,5 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(updatedTender); err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
-	}
-	w.WriteHeader(http.StatusOK)
+	common.RespondWithJson(w, http.StatusOK, updatedTender)
 }

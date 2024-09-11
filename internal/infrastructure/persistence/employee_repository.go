@@ -47,7 +47,7 @@ func (r *EmployeeRepo) FindEmployeeIdByUsername(username string) (uuid.UUID, err
 	err := r.Conn.QueryRow(query, username).Scan(&employeeId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return uuid.Nil, utils.ErrElementNotExist
+			return uuid.Nil, utils.ErrorElementNotExist
 		}
 		return uuid.Nil, errors.New(consts.UnknownBDError)
 	}
