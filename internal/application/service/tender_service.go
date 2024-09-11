@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"tenders/internal/application/interfaces"
 	"tenders/internal/domain/dto"
@@ -89,9 +88,17 @@ func (s *TenderService) GetStatusByTenderId(tenderId uuid.UUID, username string)
 	return tender.Status, nil
 }
 
-func (s *TenderService) UpdateTender(tender *entity.Tender) (*entity.Tender, error) {
+func (s *TenderService) UpdateTenderWithVersionIncr(tender *entity.Tender) (*entity.Tender, error) {
 	tender.Version = tender.Version + 1
-	fmt.Println(tender.TenderId, tender.Id)
+	return s.tenderRepo.Create(tender)
+}
+
+func (s *TenderService) UpdateTenderFromOldVersion(tender *entity.Tender) (*entity.Tender, error) {
+	latestVersion, err := s.tenderRepo.FindLatestVersionByTenderId(tender.TenderId)
+	if err != nil {
+		return nil, err
+	}
+	tender.Version = latestVersion + 1
 	return s.tenderRepo.Create(tender)
 }
 
@@ -111,10 +118,44 @@ func (s *TenderService) UpdateStatus(tenderId uuid.UUID, status, username string
 	}
 
 	tender.Status = status
-	updatedTender, err := s.UpdateTender(tender)
+	updatedTender, err := s.UpdateTenderWithVersionIncr(tender)
 	if err != nil {
 		return nil, err
 	}
 
 	return updatedTender, nil
+}
+
+func (s *TenderService) FindByTenderId(tenderId uuid.UUID) (*entity.Tender, error) {
+	tender, err := s.tenderRepo.FindByTenderId(tenderId)
+	if err != nil {
+		return nil, err
+	}
+	return tender, nil
+}
+
+func (s *TenderService) VerifyUserResponsibleForOrg(username string, organizationId uuid.UUID) (uuid.UUID, error) {
+	return s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, organizationId)
+}
+
+func (s *TenderService) GetTenderByVersion(tenderId uuid.UUID, version int) (*entity.Tender, error) {
+	return s.tenderRepo.FindByTenderIdAndVersion(tenderId, version)
+}
+
+// todo после рефакторинга
+func (s *TenderService) RollbackTender(tenderId uuid.UUID, version int, username string) (*entity.Tender, error) {
+	// Получаем тендер по ID и версии
+	tender, err := s.GetTenderByVersion(tenderId, version)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, что пользователь ответственен за организацию
+	_, err = s.VerifyUserResponsibleForOrg(username, tender.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Обновляем тендер на основе старой версии
+	return s.UpdateTenderFromOldVersion(tender)
 }

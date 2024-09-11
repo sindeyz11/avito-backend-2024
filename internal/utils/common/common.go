@@ -1,16 +1,12 @@
-package utils
+package common
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"net/http"
 	"strconv"
-	"strings"
 	"tenders/internal/domain/entity"
 )
-
-func NewValidationError(errorFields []string) error {
-	return errors.New("Неправильно заполнены поля: " + strings.Join(errorFields, ", "))
-}
 
 func GetPaginationParams(r *http.Request) (int, int, error) {
 	query := r.URL.Query()
@@ -57,4 +53,24 @@ func ValidateTenderStatus(status string) error {
 		return errors.New("указан некорректный статус тендера: " + status)
 	}
 	return nil
+}
+
+func GetTenderUUIDFromRequestPath(r *http.Request) (uuid.UUID, error) {
+	tenderIdStr := r.PathValue("tenderId")
+	tenderId, err := uuid.Parse(tenderIdStr)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return tenderId, nil
+}
+
+func GetVersionFromRequestPath(r *http.Request) (int, error) {
+	versionStr := r.PathValue("version")
+
+	version, err := strconv.Atoi(versionStr)
+	if err != nil {
+		return -734, errors.New("невалидная версия")
+	}
+
+	return version, nil
 }

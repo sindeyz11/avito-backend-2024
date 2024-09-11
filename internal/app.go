@@ -27,6 +27,8 @@ func Run() {
 	mux.HandleFunc("GET /api/tenders/my", tenderController.GetAllTendersByUsername)
 	mux.HandleFunc("GET /api/tenders/{tenderId}/status", tenderController.GetTenderStatusById)
 	mux.HandleFunc("PUT /api/tenders/{tenderId}/status", tenderController.UpdateTenderStatusById)
+	mux.HandleFunc("PATCH /api/tenders/{tenderId}/edit", tenderController.EditTender)
+	mux.HandleFunc("PUT /api/tenders/{tenderId}/rollback/{version}", tenderController.RollbackTender)
 
 	fmt.Printf("Starting server at port 8080\nhttp://127.0.0.1:8080/\n")
 

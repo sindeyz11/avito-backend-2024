@@ -10,4 +10,6 @@ type TenderRepository interface {
 	FindAllByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error)
 	FindAll(serviceTypes []string, limit, offset int) ([]entity.Tender, error)
 	FindByTenderId(id uuid.UUID) (*entity.Tender, error)
+	FindByTenderIdAndVersion(tenderId uuid.UUID, version int) (*entity.Tender, error)
+	FindLatestVersionByTenderId(tenderId uuid.UUID) (int, error)
 }

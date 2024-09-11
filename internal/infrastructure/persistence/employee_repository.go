@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"tenders/internal/domain/repository"
+	"tenders/internal/utils"
 	"tenders/internal/utils/consts"
 )
 
@@ -46,7 +47,7 @@ func (r *EmployeeRepo) FindEmployeeIdByUsername(username string) (uuid.UUID, err
 	err := r.Conn.QueryRow(query, username).Scan(&employeeId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return uuid.Nil, errors.New(consts.UserNotExistsError)
+			return uuid.Nil, utils.ErrElementNotExist
 		}
 		return uuid.Nil, errors.New(consts.UnknownBDError)
 	}

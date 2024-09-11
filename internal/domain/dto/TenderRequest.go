@@ -15,6 +15,7 @@ type TenderRequest struct {
 	CreatorUsername string    `json:"creatorUsername"`
 }
 
+// MapToTender мапит в тендер и валидирует
 func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 	var errorFields []string
 

@@ -160,3 +160,36 @@ func (r *TenderRepo) FindByTenderId(tenderId uuid.UUID) (*entity.Tender, error) 
 
 	return &tender, nil
 }
+
+func (r *TenderRepo) FindByTenderIdAndVersion(tenderId uuid.UUID, version int) (*entity.Tender, error) {
+	var tender entity.Tender
+	queryStr := `
+		SELECT tender_id, name, description, service_type, status, version,
+		       organization_id, creator_id, created_at
+		FROM tender
+		WHERE tender_id = $1 AND version = $2
+	`
+	err := r.Conn.QueryRow(queryStr, tenderId, version).Scan(
+		&tender.TenderId, &tender.Name, &tender.Description,
+		&tender.ServiceType, &tender.Status, &tender.Version,
+		&tender.OrganizationID, &tender.CreatorID, &tender.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &tender, nil
+}
+
+func (r *TenderRepo) FindLatestVersionByTenderId(tenderId uuid.UUID) (int, error) {
+	var version int
+	query := `
+		SELECT MAX(version)
+		FROM tender
+		WHERE tender_id = $1
+	`
+	err := r.Conn.QueryRow(query, tenderId).Scan(&version)
+	if err != nil {
+		return -734, err
+	}
+	return version, nil
+}
