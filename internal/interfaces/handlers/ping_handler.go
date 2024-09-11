@@ -13,5 +13,4 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, consts.FailedToWriteResponse, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"tenders/internal/application/service"
 	"tenders/internal/infrastructure/config"
 	"tenders/internal/infrastructure/persistence"
@@ -22,6 +23,8 @@ func Run() {
 	tenderController := handlers.NewTenderHandler(tenderService)
 
 	mux.HandleFunc("GET /api/ping", handlers.Ping)
+
+	// tenders
 	mux.HandleFunc("POST /api/tenders/new", tenderController.CreateTender)
 	mux.HandleFunc("GET /api/tenders", tenderController.GetAllTenders)
 	mux.HandleFunc("GET /api/tenders/my", tenderController.GetAllTendersByUsername)
@@ -30,9 +33,16 @@ func Run() {
 	mux.HandleFunc("PATCH /api/tenders/{tenderId}/edit", tenderController.EditTender)
 	mux.HandleFunc("PUT /api/tenders/{tenderId}/rollback/{version}", tenderController.RollbackTender)
 
-	fmt.Printf("Starting server at port 8080\nhttp://127.0.0.1:8080/\n")
+	// bids
+	mux.HandleFunc("GET /api/bids", handlers.Ping)
 
-	if err := http.ListenAndServe(":8080", handler); err != nil {
+	serverAddress := os.Getenv("SERVER_ADDRESS")
+	if serverAddress == "" {
+		log.Fatalf("Can't get server address from env")
+	}
+	fmt.Printf(fmt.Sprintf("Starting server on http://%s/\n", serverAddress))
+
+	if err := http.ListenAndServe(serverAddress, handler); err != nil {
 		log.Fatal(err)
 	}
 }

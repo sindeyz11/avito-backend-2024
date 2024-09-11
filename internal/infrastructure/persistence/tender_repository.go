@@ -38,7 +38,7 @@ func (r *TenderRepo) Create(tender *entity.Tender) (*entity.Tender, error) {
 }
 
 // FindAllByEmployeeId находит тендеры по имени пользователя, который их создал
-func (r *TenderRepo) FindAllByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error) {
+func (r *TenderRepo) FindAllAvailableByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error) {
 	tenders := []entity.Tender{}
 	queryStr := `
 		SELECT DISTINCT ON (t.tender_id, t.name) t.tender_id, t.name, t.description, t.service_type, t.status, t.version,
@@ -102,8 +102,6 @@ func (r *TenderRepo) FindAll(serviceTypes []string, limit, offset int) ([]entity
 		}
 		queryStr += fmt.Sprintf(" AND service_type IN (%s)", strings.Join(placeholders, ","))
 	}
-
-	// TODO мб надо добавить фильтр по PUBLISHED
 
 	// Добавление сортировки и лимита с оффсетом
 	queryStr += fmt.Sprintf(" ORDER BY name ASC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)

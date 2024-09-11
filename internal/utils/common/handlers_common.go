@@ -20,11 +20,10 @@ func RespondWithError(w http.ResponseWriter, statusCode int, errorMsg string) {
 	_, _ = w.Write(j)
 }
 
-func RespondWithJson(w http.ResponseWriter, statusCode int, data interface{}) {
+func RespondOKWithJson(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
 		return
 	}
-	w.WriteHeader(statusCode)
 }

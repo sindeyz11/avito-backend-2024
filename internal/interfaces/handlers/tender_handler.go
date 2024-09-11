@@ -18,38 +18,35 @@ type TenderHandler struct {
 	service interfaces.TenderService
 }
 
-func NewTenderHandler(
-	service interfaces.TenderService,
-) *TenderHandler {
-	return &TenderHandler{
-		service: service,
-	}
+func NewTenderHandler(service interfaces.TenderService) *TenderHandler {
+	return &TenderHandler{service: service}
 }
 
 func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 	var tenderRequest dto.TenderRequest
-	err := json.NewDecoder(r.Body).Decode(&tenderRequest)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&tenderRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}
 
 	tender, err := h.service.Create(&tenderRequest)
 	if err != nil {
-		// TODO в первом ифе может быть ситуация когда ввели рандомную оргу
-		if err.Error() == consts.CannotFindUserError {
+		if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
 		} else if strings.HasPrefix(err.Error(), "Неправильно") {
 			common.RespondWithError(w, http.StatusBadRequest, err.Error())
 		} else {
-			common.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		}
 		return
 	}
 
-	common.RespondWithJson(w, http.StatusOK, tender)
+	common.RespondOKWithJson(w, tender)
 }
 
+// TODO мб надо добавить фильтр по PUBLISHED
 func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 	serviceTypeFilter, err := common.GetServiceTypeFilter(r)
 	if err != nil {
@@ -63,16 +60,16 @@ func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO только published
 	tenders, err := h.service.FindAll(serviceTypeFilter, limit, offset)
 	if err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
+		common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		return
 	}
 
-	common.RespondWithJson(w, http.StatusOK, tenders)
+	common.RespondOKWithJson(w, tenders)
 }
 
+// TODO мб надо добавить фильтр по доступных организации пользователя
 func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	if username == "" {
@@ -86,17 +83,17 @@ func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	tenders, err := h.service.FindAllByEmployeeUsername(username, limit, offset)
+	tenders, err := h.service.FindAllAvailableByEmployeeUsername(username, limit, offset)
 	if err != nil {
-		if errors.Is(err, utils.ErrorElementNotExist) {
+		if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
-			common.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		}
 		return
 	}
 
-	common.RespondWithJson(w, http.StatusOK, tenders)
+	common.RespondOKWithJson(w, tenders)
 }
 
 func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Request) {
@@ -111,14 +108,14 @@ func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Reque
 
 	status, err := h.service.GetStatusByTenderId(tenderId, username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
-		} else if errors.Is(err, utils.ErrorUnauthorizedAccess) {
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
 			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
-		} else if err.Error() == consts.UserNotExistsError {
+		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
-			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError)
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		}
 		return
 	}
@@ -154,9 +151,9 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
-		} else if errors.Is(err, utils.ErrorUnauthorizedAccess) {
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
 			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
-		} else if err.Error() == consts.UserNotExistsError {
+		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
 			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
@@ -164,7 +161,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	common.RespondWithJson(w, http.StatusOK, tender)
+	common.RespondOKWithJson(w, tender)
 }
 
 func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
@@ -186,41 +183,21 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.service.FindByTenderId(tenderId)
+	updatedTender, err := h.service.EditTender(tenderId, username, &updateRequest)
 	if err != nil {
-		if errors.Is(err, utils.ErrorElementNotExist) {
+		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
-			common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		}
 		return
 	}
 
-	_, err = h.service.VerifyUserResponsibleForOrg(username, tender.OrganizationID)
-	if err != nil {
-		if errors.Is(err, utils.ErrorUnauthorizedAccess) {
-			http.Error(w, "Forbidden: you are not responsible for this organization", http.StatusForbidden)
-		} else if errors.Is(err, utils.ErrorElementNotExist) {
-			http.Error(w, "User not found", http.StatusUnauthorized)
-		} else {
-			// todo fix
-			common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
-		}
-		return
-	}
-
-	if err = updateRequest.MapToTender(tender); err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	updatedTender, err := h.service.UpdateTenderWithVersionIncr(tender)
-	if err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
-		return
-	}
-
-	common.RespondWithJson(w, http.StatusOK, updatedTender)
+	common.RespondOKWithJson(w, updatedTender)
 }
 
 func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
@@ -242,34 +219,19 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.service.GetTenderVersion(tenderId, version)
+	updatedTender, err := h.service.RollbackTender(tenderId, version, username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderOrVersionNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
-			common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		}
 		return
 	}
 
-	_, err = h.service.VerifyUserResponsibleForOrg(username, tender.OrganizationID)
-	if err != nil {
-		if errors.Is(err, utils.ErrorUnauthorizedAccess) {
-			http.Error(w, "Forbidden: you are not responsible for this organization", http.StatusForbidden)
-		} else if errors.Is(err, utils.ErrorElementNotExist) {
-			http.Error(w, "User not found", http.StatusUnauthorized)
-		} else {
-			// todo fix
-			common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
-		}
-		return
-	}
-
-	updatedTender, err := h.service.UpdateTenderFromOldVersion(tender)
-	if err != nil {
-		common.RespondWithError(w, http.StatusInternalServerError, consts.UnknownBDError)
-		return
-	}
-
-	common.RespondWithJson(w, http.StatusOK, updatedTender)
+	common.RespondOKWithJson(w, updatedTender)
 }
