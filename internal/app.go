@@ -21,7 +21,7 @@ func Run() {
 	tenderService := service.NewTenderService(repositories.TenderRepo, repositories.EmployeeRepo)
 	tenderController := handlers.NewTenderHandler(tenderService)
 
-	mux.HandleFunc("/api/ping", handlers.Ping)
+	mux.HandleFunc("GET /api/ping", handlers.Ping)
 	mux.HandleFunc("POST /api/tenders/new", tenderController.CreateTender)
 	mux.HandleFunc("GET /api/tenders", tenderController.GetAllTenders)
 	mux.HandleFunc("GET /api/tenders/my", tenderController.GetAllTendersByUsername)
