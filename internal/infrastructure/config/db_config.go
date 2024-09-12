@@ -52,8 +52,6 @@ func NewPostgresConn(c *DatabaseConfig) *sql.DB {
 		c.Database,
 	)
 
-	//connStr := "postgres://postgres:root@localhost:5432/tendors?sslmode=disable"
-
 	conn, err := sql.Open("postgres", connStr)
 
 	if err != nil {

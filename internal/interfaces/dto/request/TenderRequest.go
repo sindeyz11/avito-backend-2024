@@ -39,9 +39,9 @@ func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 		errorFields = append(errorFields, "status")
 	}
 
-	//if tenderRequest.OrganizationID.String() == "" {
-	//	errorFields = append(errorFields, "organizationID")
-	//}
+	if tenderRequest.OrganizationID.String() == "" {
+		errorFields = append(errorFields, "organizationID")
+	}
 
 	if len(errorFields) > 0 {
 		return nil, utils.NewValidationError(errorFields)
