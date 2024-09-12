@@ -77,7 +77,56 @@ func (s *BidService) FindAllByEmployeeUsername(username string, limit, offset in
 	return s.bidRepo.FindAllByEmployeeId(employeeId, limit, offset)
 }
 
-func (s *BidService) FindAllByTenderId(tenderId uuid.UUID, username string, limit, offset int) ([]*entity.Bid, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *BidService) specifyEmployeeVerificationError(username string, err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		_, userNotFoundErr := s.employeeRepo.FindEmployeeIdByUsername(username)
+		if userNotFoundErr != nil {
+			return utils.UserNotExistsError
+		}
+		return utils.UnauthorizedAccessError
+	}
+	return err
+}
+
+func (s *BidService) FindAllByTenderId(tenderId uuid.UUID, username string, limit, offset int) ([]entity.Bid, error) {
+	tender, err := s.tenderRepo.FindByTenderId(tenderId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.TenderNotExistsError
+		}
+		return nil, err
+	}
+
+	_, err = s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, tender.OrganizationID)
+	if err != nil {
+		return nil, s.specifyEmployeeVerificationError(username, err)
+	}
+
+	bids, err := s.bidRepo.FindAllByTenderId(tenderId, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return bids, nil
+}
+
+func (s *BidService) GetStatusByBidId(bidId uuid.UUID, username string) (string, error) {
+	bid, err := s.bidRepo.FindByBidId(bidId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", utils.BidNotExistsError
+		}
+		return "", err
+	}
+
+	tender, err := s.tenderRepo.FindByTenderId(bid.TenderId)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, tender.OrganizationID)
+	if err != nil {
+		err = s.specifyEmployeeVerificationError(username, err)
+		return "", err
+	}
+	return bid.Status, nil
 }

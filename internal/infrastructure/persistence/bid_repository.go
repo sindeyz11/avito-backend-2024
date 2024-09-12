@@ -72,14 +72,71 @@ func (r *BidRepo) FindAllByEmployeeId(id uuid.UUID, limit, offset int) ([]entity
 	return bids, nil
 }
 
-func (r *BidRepo) FindAllByTenderId(tenderId uuid.UUID) ([]entity.Bid, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *BidRepo) FindAllByTenderId(tenderId uuid.UUID, limit, offset int) ([]entity.Bid, error) {
+	bids := []entity.Bid{}
+	queryStr := `
+		SELECT bid_id, name, description, tender_id, tender_version, status, author_type, author_id, version, created_at
+		FROM bid b
+		WHERE b.tender_id = $1 AND b.version = (
+			SELECT MAX(version)
+			FROM bid
+			WHERE bid_id = b.bid_id
+		)
+		ORDER BY name ASC LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.Conn.Query(queryStr, tenderId, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var bid entity.Bid
+		err = rows.Scan(
+			&bid.BidId, &bid.Name, &bid.Description,
+			&bid.TenderId, &bid.TenderVersion, &bid.Status,
+			&bid.AuthorType, &bid.AuthorId, &bid.Version, &bid.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		bids = append(bids, bid)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return bids, nil
 }
 
 func (r *BidRepo) FindByBidId(bidId uuid.UUID) (*entity.Bid, error) {
-	//TODO implement me
-	panic("implement me")
+	var bid entity.Bid
+	queryStr := `
+		SELECT bid_id, name, description, tender_id, tender_version, status, author_type, author_id, version, created_at
+		FROM bid b
+		WHERE b.bid_id = $1 AND b.version = (
+			SELECT MAX(version)
+			FROM bid
+			WHERE bid_id = b.bid_id
+		)
+	`
+
+	row := r.Conn.QueryRow(queryStr, bidId)
+
+	err := row.Scan(
+		&bid.BidId, &bid.Name, &bid.Description,
+		&bid.TenderId, &bid.TenderVersion, &bid.Status,
+		&bid.AuthorType, &bid.AuthorId, &bid.Version, &bid.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &bid, nil
 }
 
 func (r *BidRepo) FindByTenderIdAndVersion(bidId uuid.UUID, version int) (*entity.Bid, error) {

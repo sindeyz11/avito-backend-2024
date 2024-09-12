@@ -111,7 +111,7 @@ func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Reque
 		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
 		} else if errors.Is(err, utils.UnauthorizedAccessError) {
-			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
 		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
@@ -152,7 +152,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 		if errors.Is(err, sql.ErrNoRows) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
 		} else if errors.Is(err, utils.UnauthorizedAccessError) {
-			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
 		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
@@ -188,7 +188,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderNotExists)
 		} else if errors.Is(err, utils.UnauthorizedAccessError) {
-			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
 		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {
@@ -224,7 +224,7 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, utils.TenderNotExistsError) {
 			common.RespondWithError(w, http.StatusNotFound, consts.TenderOrVersionNotExists)
 		} else if errors.Is(err, utils.UnauthorizedAccessError) {
-			common.RespondWithError(w, http.StatusForbidden, consts.StatusForbidden)
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
 		} else if errors.Is(err, utils.UserNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
 		} else {

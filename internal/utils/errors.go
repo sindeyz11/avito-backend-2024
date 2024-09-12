@@ -11,6 +11,7 @@ var (
 
 	ElementNotExistsError = errors.New("element not exist")
 	TenderNotExistsError  = errors.New("tender not exist")
+	BidNotExistsError     = errors.New("bid not exist")
 	UserNotExistsError    = errors.New("user not exist")
 )
 
