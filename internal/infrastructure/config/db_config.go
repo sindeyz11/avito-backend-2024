@@ -44,7 +44,7 @@ func (c *Config) PostgresConfig() *DatabaseConfig {
 
 func NewPostgresConn(c *DatabaseConfig) *sql.DB {
 	connStr := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		c.Username,
 		c.Password,
 		c.Host,
