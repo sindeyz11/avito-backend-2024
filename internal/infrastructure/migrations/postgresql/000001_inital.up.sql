@@ -51,18 +51,46 @@ CREATE TYPE tender_service_type AS ENUM (
     'Manufacture'
     );
 
-
 CREATE TABLE IF NOT EXISTS tender
 (
-    id              UUID PRIMARY KEY             DEFAULT uuid_generate_v4(),
     tender_id       UUID                         DEFAULT uuid_generate_v4() NOT NULL,
     name            VARCHAR(100)        NOT NULL,
     description     VARCHAR(500),
     service_type    tender_service_type NOT NULL,
-    status          tender_status       NOT NULL DEFAULT 'Created',
+    status          tender_status         NOT NULL DEFAULT 'Created',
     version         INT                 NOT NULL DEFAULT 1,
     organization_id UUID REFERENCES organization (id) ON DELETE CASCADE,
     creator_id      UUID                REFERENCES employee (id) ON DELETE SET NULL,
     created_at      TIMESTAMP                    DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (tender_id, version)
+    PRIMARY KEY (tender_id, version)
+);
+
+CREATE TYPE author_type AS ENUM ('Organization', 'User');
+
+CREATE TYPE bid_status AS ENUM (
+    'Created',
+    'Published',
+    'Canceled'
+    );
+
+CREATE TABLE IF NOT EXISTS bid
+(
+    bid_id         UUID                  DEFAULT uuid_generate_v4() NOT NULL,
+    name           VARCHAR(100) NOT NULL,
+    description    VARCHAR(500),
+    status         status_enum  NOT NULL DEFAULT 'Created',
+    tender_id      UUID         NOT NULL,
+    tender_version INT          NOT NULL,
+    author_type    VARCHAR(50)  NOT NULL,
+    author_id      UUID,
+    version        INT          NOT NULL DEFAULT 1,
+    created_at     TIMESTAMP             DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (bid_id, version),
+
+    FOREIGN KEY (tender_id, tender_version)
+        REFERENCES tender (tender_id, version)
+        ON DELETE CASCADE,
+
+    UNIQUE (bid_id, version)
 );

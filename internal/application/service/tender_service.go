@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"tenders/internal/application/interfaces"
-	"tenders/internal/domain/dto"
 	"tenders/internal/domain/entity"
 	"tenders/internal/domain/repository"
+	"tenders/internal/interfaces/dto/request"
 	"tenders/internal/utils"
 	"time"
 )
@@ -70,7 +70,7 @@ func (s *TenderService) updateTenderFromOldVersion(tender *entity.Tender) (*enti
 	return s.tenderRepo.Create(tender)
 }
 
-func (s *TenderService) Create(tenderRequest *dto.TenderRequest) (*entity.Tender, error) {
+func (s *TenderService) Create(tenderRequest *request.TenderRequest) (*entity.Tender, error) {
 	tender, err := tenderRequest.MapToTender()
 	if err != nil {
 		return nil, err
@@ -169,7 +169,7 @@ func (s *TenderService) FindByTenderId(tenderId uuid.UUID) (*entity.Tender, erro
 	return tender, nil
 }
 
-func (s *TenderService) EditTender(tenderId uuid.UUID, username string, updateRequest *dto.EditTenderRequest) (*entity.Tender, error) {
+func (s *TenderService) EditTender(tenderId uuid.UUID, username string, updateRequest *request.EditTenderRequest) (*entity.Tender, error) {
 	tender, err := s.tenderRepo.FindByTenderId(tenderId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

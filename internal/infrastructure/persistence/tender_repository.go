@@ -25,19 +25,19 @@ func (r *TenderRepo) Create(tender *entity.Tender) (*entity.Tender, error) {
             name, description, service_type, status,
             organization_id, creator_id, created_at, tender_id, version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING tender_id
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `
-	err := r.Conn.QueryRow(insertQuery,
+	_, err := r.Conn.Exec(insertQuery,
 		tender.Name, tender.Description, tender.ServiceType, tender.Status, tender.OrganizationID,
 		tender.CreatorID, tender.CreatedAt, tender.TenderId, tender.Version,
-	).Scan(&tender.TenderId)
+	)
 	if err != nil {
 		return nil, err
 	}
 	return tender, nil
 }
 
-// FindAllByEmployeeId находит тендеры по имени пользователя, который их создал
+// FindAllAvailableByEmployeeId находит тендеры по имени пользователя, который их создал
 func (r *TenderRepo) FindAllAvailableByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error) {
 	tenders := []entity.Tender{}
 	queryStr := `

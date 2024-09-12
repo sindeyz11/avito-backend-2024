@@ -20,21 +20,32 @@ func Run() {
 	repositories := persistence.NewRepositories(config.NewPostgresConn(dbConf))
 
 	tenderService := service.NewTenderService(repositories.TenderRepo, repositories.EmployeeRepo)
-	tenderController := handlers.NewTenderHandler(tenderService)
+	tenderHandler := handlers.NewTenderHandler(tenderService)
+
+	bidService := service.NewBidService(repositories.BidRepo, repositories.TenderRepo, repositories.EmployeeRepo)
+	bidHandler := handlers.NewBidHandler(bidService)
 
 	mux.HandleFunc("GET /api/ping", handlers.Ping)
 
 	// tenders
-	mux.HandleFunc("POST /api/tenders/new", tenderController.CreateTender)
-	mux.HandleFunc("GET /api/tenders", tenderController.GetAllTenders)
-	mux.HandleFunc("GET /api/tenders/my", tenderController.GetAllTendersByUsername)
-	mux.HandleFunc("GET /api/tenders/{tenderId}/status", tenderController.GetTenderStatusById)
-	mux.HandleFunc("PUT /api/tenders/{tenderId}/status", tenderController.UpdateTenderStatusById)
-	mux.HandleFunc("PATCH /api/tenders/{tenderId}/edit", tenderController.EditTender)
-	mux.HandleFunc("PUT /api/tenders/{tenderId}/rollback/{version}", tenderController.RollbackTender)
+	mux.HandleFunc("POST /api/tenders/new", tenderHandler.CreateTender)
+	mux.HandleFunc("GET /api/tenders", tenderHandler.GetAllTenders)
+	mux.HandleFunc("GET /api/tenders/my", tenderHandler.GetAllTendersByUsername)
+	mux.HandleFunc("GET /api/tenders/{tenderId}/status", tenderHandler.GetTenderStatusById)
+	mux.HandleFunc("PUT /api/tenders/{tenderId}/status", tenderHandler.UpdateTenderStatusById)
+	mux.HandleFunc("PATCH /api/tenders/{tenderId}/edit", tenderHandler.EditTender)
+	mux.HandleFunc("PUT /api/tenders/{tenderId}/rollback/{version}", tenderHandler.RollbackTender)
 
 	// bids
-	mux.HandleFunc("GET /api/bids", handlers.Ping)
+	mux.HandleFunc("POST /api/bids/new", bidHandler.CreateBid)
+	mux.HandleFunc("GET /api/bids/my", bidHandler.GetAllBidsByUsername)
+
+	mux.HandleFunc("GET /api/bids/{tenderId}/list", bidHandler.GetAllBidsByUsername)
+	mux.HandleFunc("GET /api/bids/{bidId}/status", handlers.Ping)
+	mux.HandleFunc("PUT /api/bids/{bidId}/status", handlers.Ping)
+	mux.HandleFunc("PATCH /api/bids/{bidId}/edit", handlers.Ping)
+	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", handlers.Ping)
+	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", handlers.Ping)
 
 	serverAddress := os.Getenv("SERVER_ADDRESS")
 	if serverAddress == "" {

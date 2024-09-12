@@ -1,4 +1,4 @@
-package dto
+package request
 
 import (
 	"github.com/google/uuid"
@@ -10,7 +10,7 @@ type TenderRequest struct {
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
 	ServiceType     string    `json:"serviceType"`
-	Status          string    `json:"status"`
+	Status          string    `json:"status"` //todo
 	OrganizationID  uuid.UUID `json:"organizationId"`
 	CreatorUsername string    `json:"creatorUsername"`
 }

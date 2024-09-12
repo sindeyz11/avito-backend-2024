@@ -14,6 +14,7 @@ const (
 	IncorrectTenderStatus      string = "Статус не указан либо указан некорректный"
 
 	UserNotExists            string = "Пользователь не существует или некорректен для данного запроса"
+	UserOrOrgNotExists       string = "Пользователь или организация не существует"
 	TenderNotExists          string = "Тендер не существует"
 	TenderOrVersionNotExists string = "Тендер или его версия не существует"
 )

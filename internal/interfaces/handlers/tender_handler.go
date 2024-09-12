@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"tenders/internal/application/interfaces"
-	"tenders/internal/domain/dto"
+	"tenders/internal/interfaces/dto/request"
 	"tenders/internal/utils"
 	"tenders/internal/utils/common"
 	"tenders/internal/utils/consts"
@@ -23,7 +23,7 @@ func NewTenderHandler(service interfaces.TenderService) *TenderHandler {
 }
 
 func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
-	var tenderRequest dto.TenderRequest
+	var tenderRequest request.TenderRequest
 	if err := json.NewDecoder(r.Body).Decode(&tenderRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
@@ -177,7 +177,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updateRequest dto.EditTenderRequest
+	var updateRequest request.EditTenderRequest
 	if err = json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return

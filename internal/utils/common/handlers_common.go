@@ -3,12 +3,12 @@ package common
 import (
 	"encoding/json"
 	"net/http"
-	"tenders/internal/domain/dto"
+	"tenders/internal/interfaces/dto/response"
 	"tenders/internal/utils/consts"
 )
 
 func RespondWithError(w http.ResponseWriter, statusCode int, errorMsg string) {
-	j, err := json.Marshal(dto.ErrorResponse{Reason: errorMsg})
+	j, err := json.Marshal(response.ErrorResponse{Reason: errorMsg})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
