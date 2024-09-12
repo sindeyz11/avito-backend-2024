@@ -49,7 +49,7 @@ func Run() {
 
 	serverAddress := os.Getenv("SERVER_ADDRESS")
 	if serverAddress == "" {
-		log.Fatalf("Can't get server address from env")
+		serverAddress = ":8080"
 	}
 	fmt.Printf(fmt.Sprintf("Starting server on http://%s/\n", serverAddress))
 

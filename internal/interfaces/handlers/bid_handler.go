@@ -71,23 +71,23 @@ func (h *BidHandler) GetAllBidsByUsername(w http.ResponseWriter, r *http.Request
 	common.RespondOKWithJson(w, tenders)
 }
 
-func (h *BidHandler) GetBidsForTender(w http.ResponseWriter, r *http.Request) {
+func (h *BidHandler) GetBidsListByTender(w http.ResponseWriter, r *http.Request) {
 	tenderIdStr := r.URL.Query().Get("tenderId")
 	tenderId, err := uuid.Parse(tenderIdStr)
 	if err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid tender ID")
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
 		return
 	}
 
 	username := r.URL.Query().Get("username")
 	if username == "" {
-		common.RespondWithError(w, http.StatusBadRequest, "Username parameter is required")
+		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
 		return
 	}
 
 	limit, offset, err := common.GetPaginationParams(r)
 	if err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid pagination parameters")
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectLimitOffsetParams)
 		return
 	}
 
