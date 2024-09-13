@@ -40,22 +40,22 @@ func (r *TenderRepo) Create(tender *entity.Tender) (*entity.Tender, error) {
 	return tender, nil
 }
 
-// FindAllAvailableByEmployeeId находит тендеры по имени пользователя, который их создал
-func (r *TenderRepo) FindAllAvailableByEmployeeId(id uuid.UUID, limit, offset int) ([]entity.Tender, error) {
+// FindAllAvailableByOrganizationId находит список тендеров организцаии к который принадлежит работник
+func (r *TenderRepo) FindAllAvailableByOrganizationId(organizationId uuid.UUID, limit, offset int) ([]entity.Tender, error) {
 	tenders := []entity.Tender{}
 	queryStr := `
 		SELECT DISTINCT ON (t.tender_id, t.name) t.tender_id, t.name, t.description, t.service_type, t.status, t.version,
 		       t.organization_id, t.creator_id, t.created_at
 		FROM tender t
-		WHERE t.creator_id = $1 AND t.version = (
+		WHERE t.organization_id = $1 AND t.version = (
 			SELECT MAX(version)
 			FROM tender
 			WHERE tender_id = t.tender_id
 		)
-		ORDER BY name ASC LIMIT $2 OFFSET $3
+		ORDER BY t.name ASC LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.Conn.Query(queryStr, id, limit, offset)
+	rows, err := r.Conn.Query(queryStr, organizationId, limit, offset)
 	if err != nil {
 		return nil, err
 	}

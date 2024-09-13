@@ -18,7 +18,7 @@ func Run() {
 	dbConf := config.NewConfig().PostgresConfig()
 	repositories := persistence.NewRepositories(config.NewPostgresConn(dbConf))
 
-	tenderService := service.NewTenderService(repositories.TenderRepo, repositories.EmployeeRepo)
+	tenderService := service.NewTenderService(repositories.TenderRepo, repositories.EmployeeRepo, repositories.OrganizationRepo)
 	tenderHandler := handlers.NewTenderHandler(tenderService)
 
 	bidService := service.NewBidService(
@@ -54,7 +54,7 @@ func Run() {
 	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", bidHandler.SubmitDecision)
 
 	// feedback
-	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", feedbackHandler.ReviewsList)
+	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", feedbackHandler.GetReviewsList)
 	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", feedbackHandler.SubmitFeedback)
 
 	fmt.Printf("Starting server on http://0.0.0.0:8080/\n")

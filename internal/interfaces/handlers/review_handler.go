@@ -18,6 +18,11 @@ func NewReviewHandler(service interfaces.ReviewService) *ReviewHandler {
 }
 
 func (h *ReviewHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request) {
+	if common.CheckForExtraParams(r, []string{"username", "bidFeedback"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
@@ -52,7 +57,7 @@ func (h *ReviewHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request) {
 	common.RespondOKWithJson(w, bid)
 }
 
-func (h *ReviewHandler) ReviewsList(w http.ResponseWriter, r *http.Request) {
+func (h *ReviewHandler) GetReviewsList(w http.ResponseWriter, r *http.Request) {
 	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
@@ -90,5 +95,11 @@ func (h *ReviewHandler) ReviewsList(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	if len(reviews) == 0 {
+		common.RespondWithError(w, http.StatusNotFound, consts.ReviewsNotFound)
+		return
+	}
+
 	common.RespondOKWithJson(w, reviews)
 }

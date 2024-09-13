@@ -68,7 +68,6 @@ func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 	common.RespondOKWithJson(w, tenders)
 }
 
-// TODO мб надо добавить фильтр по доступных организации пользователя
 func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	if username == "" {

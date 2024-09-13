@@ -15,16 +15,20 @@ import (
 )
 
 type TenderService struct {
-	tenderRepo   repository.TenderRepository
-	employeeRepo repository.EmployeeRepository
+	tenderRepo       repository.TenderRepository
+	employeeRepo     repository.EmployeeRepository
+	organizationRepo repository.OrganizationRepository
 }
 
 func NewTenderService(
-	tenderRepo repository.TenderRepository, employeeRepo repository.EmployeeRepository,
+	tenderRepo repository.TenderRepository,
+	employeeRepo repository.EmployeeRepository,
+	organizationRepo repository.OrganizationRepository,
 ) interfaces.TenderService {
 	return &TenderService{
-		tenderRepo:   tenderRepo,
-		employeeRepo: employeeRepo,
+		tenderRepo:       tenderRepo,
+		employeeRepo:     employeeRepo,
+		organizationRepo: organizationRepo,
 	}
 }
 
@@ -41,7 +45,15 @@ func (s *TenderService) FindAllAvailableByEmployeeUsername(username string, limi
 		return nil, err
 	}
 
-	return s.tenderRepo.FindAllAvailableByEmployeeId(employeeId, limit, offset)
+	organization, err := s.organizationRepo.FindByEmployeeId(employeeId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []entity.Tender{}, nil
+		}
+		return nil, err
+	}
+
+	return s.tenderRepo.FindAllAvailableByOrganizationId(organization.Id, limit, offset)
 }
 
 func (s *TenderService) specifyEmployeeVerificationError(username string, err error) error {

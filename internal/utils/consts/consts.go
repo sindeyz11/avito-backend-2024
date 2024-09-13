@@ -34,8 +34,10 @@ const (
 	IncorrectTenderId               string = "Id тендера должно быть в формате uuid"
 	IncorrectBidId                  string = "Id предложения должно быть в формате uuid"
 	IncorrectStatus                 string = "Статус не указан либо указан некорректный"
+	IncorrectParams                 string = "Указаны лишние параметры в запросе"
 
 	UserNotExists              string = "Пользователь не существует или некорректен для данного запроса"
+	ReviewsNotFound            string = "Отзывы не найдены"
 	UserOrOrgNotExists         string = "Пользователь или организация не существует"
 	TenderNotExists            string = "Тендер не существует"
 	BidNotExists               string = "Предложение не существует"

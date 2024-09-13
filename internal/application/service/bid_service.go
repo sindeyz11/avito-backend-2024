@@ -35,6 +35,8 @@ func NewBidService(
 	}
 }
 
+// Можно зарефакторить и вынести кучу всего в отдельные функции, не успел..
+
 func (s *BidService) CreateNewBid(request *request.BidRequest) (*entity.Bid, error) {
 	bid, err := request.MapToBid()
 	if err != nil {
