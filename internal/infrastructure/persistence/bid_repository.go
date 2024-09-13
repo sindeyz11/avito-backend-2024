@@ -134,6 +134,25 @@ func (r *BidRepo) FindByBidId(bidId uuid.UUID) (*entity.Bid, error) {
 	return &bid, nil
 }
 
+func (r *BidRepo) FindByBidIdTx(tx *sql.Tx, bidId uuid.UUID) (*entity.Bid, error) {
+	query := `
+		SELECT bid_id, name, description, status, tender_id, tender_version, author_type, author_id, version, created_at
+		FROM bid
+		WHERE bid_id = $1
+	`
+	row := tx.QueryRow(query, bidId)
+	var bid entity.Bid
+	err := row.Scan(
+		&bid.BidId, &bid.Name, &bid.Description,
+		&bid.Status, &bid.TenderId, &bid.TenderVersion,
+		&bid.AuthorType, &bid.AuthorId, &bid.Version, &bid.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &bid, nil
+}
+
 func (r *BidRepo) FindAllByOrganizationForEmployee(employeeId uuid.UUID) ([]entity.Bid, error) {
 	query := `
 		SELECT b.bid_id, b.name, b.description, b.status, b.tender_id,
@@ -197,12 +216,40 @@ func (r *BidRepo) UpdateStatusAndVersionTx(tx *sql.Tx, bidId uuid.UUID, status s
 	return err
 }
 
-func (r *BidRepo) FindByTenderIdAndVersion(bidId uuid.UUID, version int) (*entity.Bid, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *BidRepo) UpdateBidTx(tx *sql.Tx, bid *entity.Bid) error {
+	query := `
+		UPDATE bid
+		SET name = $1, description = $2, status = $3, tender_id = $4, 
+		    tender_version = $5, author_type = $6, author_id = $7, version = $8
+		WHERE bid_id = $9
+	`
+
+	_, err := tx.Exec(query,
+		bid.Name, bid.Description, bid.Status, bid.TenderId,
+		bid.TenderVersion, bid.AuthorType, bid.AuthorId, bid.Version,
+		bid.BidId,
+	)
+	return err
 }
 
-func (r *BidRepo) FindLatestVersionByTenderId(bidId uuid.UUID) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *BidRepo) FindVersionInHistoryTx(tx *sql.Tx, bidId uuid.UUID, version int) (*entity.Bid, error) {
+	query := `
+		SELECT 
+		    bid_id, name, description, status, tender_id,
+		    tender_version, author_type, author_id, version, created_at
+		FROM bid_history
+		WHERE bid_id = $1 and version = $2
+		LIMIT 1
+	`
+	row := tx.QueryRow(query, bidId, version)
+	var bid entity.Bid
+	err := row.Scan(
+		&bid.BidId, &bid.Name, &bid.Description,
+		&bid.Status, &bid.TenderId, &bid.TenderVersion,
+		&bid.AuthorType, &bid.AuthorId, &bid.Version, &bid.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &bid, nil
 }

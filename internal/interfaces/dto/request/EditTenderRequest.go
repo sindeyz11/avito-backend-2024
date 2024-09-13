@@ -12,7 +12,7 @@ type EditTenderRequest struct {
 	ServiceType string `json:"serviceType"`
 }
 
-func (request EditTenderRequest) MapToTender(tender *entity.Tender) error {
+func (request EditTenderRequest) UpdateTender(tender *entity.Tender) error {
 	var errorFields []string
 
 	if request.Name != "" {

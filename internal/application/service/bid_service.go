@@ -162,11 +162,11 @@ func (s *BidService) GetStatusByBidId(bidId uuid.UUID, username string) (string,
 }
 
 func (s *BidService) UpdateStatus(bidId uuid.UUID, status string, username string) (*entity.Bid, error) {
+	// Открываем транзакцию
 	tx, err := s.bidRepo.BeginTransaction()
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
 		if p := recover(); p != nil {
 			tx.Rollback()
@@ -211,8 +211,7 @@ func (s *BidService) UpdateStatus(bidId uuid.UUID, status string, username strin
 		}
 	}
 
-	err = s.bidRepo.SaveHistoricalVersionTx(tx, bid)
-	if err != nil {
+	if err = s.bidRepo.SaveHistoricalVersionTx(tx, bid); err != nil {
 		return nil, err
 	}
 
@@ -225,4 +224,146 @@ func (s *BidService) UpdateStatus(bidId uuid.UUID, status string, username strin
 	}
 
 	return bid, nil
+}
+
+func (s *BidService) EditBid(bidId uuid.UUID, username string, updateRequest *request.EditBidRequest) (*entity.Bid, error) {
+	// Открываем транзакцию
+	tx, err := s.bidRepo.BeginTransaction()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	bid, err := s.bidRepo.FindByBidIdTx(tx, bidId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.BidNotExistsError
+		}
+		return nil, err
+	}
+
+	employeeId, err := s.employeeRepo.FindEmployeeIdByUsername(username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.UserNotExistsError
+		}
+		return nil, err
+	}
+
+	if bid.AuthorType == consts.AuthorTypeUser {
+		if bid.AuthorId != employeeId {
+			return nil, utils.UnauthorizedAccessError
+		}
+	} else {
+		org, err := s.organizationRepo.FindByEmployeeId(employeeId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, utils.UnauthorizedAccessError
+			}
+			return nil, err
+		}
+		if bid.AuthorId != org.Id {
+			return nil, utils.UnauthorizedAccessError
+		}
+	}
+	editedBid, err := updateRequest.MapToBid(*bid)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.bidRepo.SaveHistoricalVersionTx(tx, bid); err != nil {
+		return nil, err
+	}
+
+	editedBid.Version += 1
+	if err = s.bidRepo.UpdateBidTx(tx, &editedBid); err != nil {
+		return nil, err
+	}
+
+	return &editedBid, nil
+}
+
+func (s *BidService) RollbackBid(bidId uuid.UUID, version int, username string) (*entity.Bid, error) {
+	// Открываем транзакцию
+	tx, err := s.bidRepo.BeginTransaction()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	currentBid, err := s.bidRepo.FindByBidIdTx(tx, bidId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.BidNotExistsError
+		}
+		return nil, err
+	}
+
+	employeeId, err := s.employeeRepo.FindEmployeeIdByUsername(username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.UserNotExistsError
+		}
+		return nil, err
+	}
+
+	if currentBid.AuthorType == consts.AuthorTypeUser {
+		if currentBid.AuthorId != employeeId {
+			return nil, utils.UnauthorizedAccessError
+		}
+	} else {
+		org, err := s.organizationRepo.FindByEmployeeId(employeeId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, utils.UnauthorizedAccessError
+			}
+			return nil, err
+		}
+		if currentBid.AuthorId != org.Id {
+			return nil, utils.UnauthorizedAccessError
+		}
+	}
+
+	historicalBid, err := s.bidRepo.FindVersionInHistoryTx(tx, bidId, version)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.VersionNotExistsError
+		}
+		return nil, err
+	}
+
+	err = s.bidRepo.SaveHistoricalVersionTx(tx, currentBid)
+	if err != nil {
+		return nil, err
+	}
+
+	historicalBid.Version = currentBid.Version + 1
+	err = s.bidRepo.UpdateBidTx(tx, historicalBid)
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return historicalBid, nil
 }

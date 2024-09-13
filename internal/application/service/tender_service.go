@@ -186,7 +186,7 @@ func (s *TenderService) EditTender(tenderId uuid.UUID, username string, updateRe
 		return nil, s.specifyEmployeeVerificationError(username, err)
 	}
 
-	if err = updateRequest.MapToTender(tender); err != nil {
+	if err = updateRequest.UpdateTender(tender); err != nil {
 		return nil, err
 	}
 

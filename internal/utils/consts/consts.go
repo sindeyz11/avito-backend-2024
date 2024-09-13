@@ -33,4 +33,5 @@ const (
 	TenderNotExists          string = "Тендер не существует"
 	BidNotExists             string = "Предложение не существует"
 	TenderOrVersionNotExists string = "Тендер или его версия не существует"
+	VersionNotExists         string = "Версия не существует"
 )

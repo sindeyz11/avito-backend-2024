@@ -43,10 +43,13 @@ func Run() {
 	mux.HandleFunc("GET /api/bids/{tenderId}/list", bidHandler.GetAllBidsByTender)
 	mux.HandleFunc("GET /api/bids/{bidId}/status", bidHandler.GetBidStatusById)
 	mux.HandleFunc("PUT /api/bids/{bidId}/status", bidHandler.UpdateBidStatusById)
+	mux.HandleFunc("PATCH /api/bids/{bidId}/edit", bidHandler.EditBid)
+	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", bidHandler.RollbackBid)
 
-	mux.HandleFunc("PATCH /api/bids/{bidId}/edit", handlers.Ping)
 	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", handlers.Ping)
-	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", handlers.Ping)
+
+	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", handlers.Ping)
+	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", handlers.Ping)
 
 	fmt.Printf("Starting server on http://0.0.0.0:8080/\n")
 

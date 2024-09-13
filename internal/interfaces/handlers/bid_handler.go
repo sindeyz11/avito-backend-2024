@@ -175,3 +175,75 @@ func (h *BidHandler) UpdateBidStatusById(w http.ResponseWriter, r *http.Request)
 	}
 	common.RespondOKWithJson(w, bid)
 }
+
+func (h *BidHandler) EditBid(w http.ResponseWriter, r *http.Request) {
+	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
+	if err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	var updateRequest request.EditBidRequest
+	if err = json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
+		return
+	}
+
+	updatedBid, err := h.service.EditBid(bidId, username, &updateRequest)
+	if err != nil {
+		if errors.Is(err, utils.BidNotExistsError) {
+			common.RespondWithError(w, http.StatusNotFound, consts.BidNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
+		}
+		return
+	}
+	common.RespondOKWithJson(w, updatedBid)
+}
+
+func (h *BidHandler) RollbackBid(w http.ResponseWriter, r *http.Request) {
+	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
+	if err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	version, err := common.GetVersionFromRequestPath(r)
+	if err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectVersion)
+		return
+	}
+
+	updatedBid, err := h.service.RollbackBid(bidId, version, username)
+	if err != nil {
+		if errors.Is(err, utils.BidNotExistsError) {
+			common.RespondWithError(w, http.StatusNotFound, consts.BidNotExists)
+		} else if errors.Is(err, utils.VersionNotExistsError) {
+			common.RespondWithError(w, http.StatusNotFound, consts.VersionNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
+		}
+		return
+	}
+	common.RespondOKWithJson(w, updatedBid)
+}

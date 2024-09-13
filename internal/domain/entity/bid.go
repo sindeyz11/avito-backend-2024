@@ -7,7 +7,6 @@ import (
 )
 
 type Bid struct {
-	Id            uuid.UUID                `json:"-"`
 	BidId         uuid.UUID                `json:"id"`
 	Name          string                   `json:"name"`
 	Description   string                   `json:"-"`
