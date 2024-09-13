@@ -8,7 +8,7 @@ import (
 
 type TenderService interface {
 	Create(tenderRequest *request.TenderRequest) (*entity.Tender, error)
-	FindAll(serviceTypes []string, limit, offset int) ([]entity.Tender, error)
+	FindAllPublished(serviceTypes []string, limit, offset int) ([]entity.Tender, error)
 	FindAllAvailableByEmployeeUsername(username string, limit, offset int) ([]entity.Tender, error)
 	GetStatusByTenderId(id uuid.UUID, username string) (string, error)
 	UpdateStatus(tenderId uuid.UUID, status, username string) (*entity.Tender, error)

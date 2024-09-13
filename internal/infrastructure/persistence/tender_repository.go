@@ -82,11 +82,11 @@ func (r *TenderRepo) FindAllAvailableByEmployeeId(id uuid.UUID, limit, offset in
 	return tenders, nil
 }
 
-func (r *TenderRepo) FindAll(serviceTypes []string, limit, offset int) ([]entity.Tender, error) {
+func (r *TenderRepo) FindAllPublished(serviceTypes []string, limit, offset int) ([]entity.Tender, error) {
 	queryStr := `SELECT tender_id, name, description, service_type, status,
        	version, organization_id, creator_id, created_at 
 		FROM tender t
-		WHERE t.version = (
+		WHERE status = 'Published' AND t.version = (
 			SELECT MAX(version)
 			FROM tender
 			WHERE tender_id = t.tender_id
@@ -144,11 +144,7 @@ func (r *TenderRepo) FindByTenderId(tenderId uuid.UUID) (*entity.Tender, error) 
 		SELECT tender_id, name, description, service_type, status, version,
 		       organization_id, creator_id, created_at
 		FROM tender
-		WHERE tender_id = $1 AND version = (
-			SELECT MAX(version)
-			FROM tender
-			WHERE tender_id = $1
-		)
+		WHERE tender_id = $1 ORDER BY version DESC LIMIT 1
 	`
 	err := r.Conn.QueryRow(queryStr, tenderId).Scan(
 		&tender.TenderId, &tender.Name, &tender.Description,

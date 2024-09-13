@@ -60,7 +60,7 @@ func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenders, err := h.service.FindAll(serviceTypeFilter, limit, offset)
+	tenders, err := h.service.FindAllPublished(serviceTypeFilter, limit, offset)
 	if err != nil {
 		common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
 		return

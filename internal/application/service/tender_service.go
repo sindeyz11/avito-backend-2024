@@ -28,8 +28,8 @@ func NewTenderService(
 	}
 }
 
-func (s *TenderService) FindAll(serviceTypes []string, limit, offset int) ([]entity.Tender, error) {
-	return s.tenderRepo.FindAll(serviceTypes, limit, offset)
+func (s *TenderService) FindAllPublished(serviceTypes []string, limit, offset int) ([]entity.Tender, error) {
+	return s.tenderRepo.FindAllPublished(serviceTypes, limit, offset)
 }
 
 func (s *TenderService) FindAllAvailableByEmployeeUsername(username string, limit, offset int) ([]entity.Tender, error) {
