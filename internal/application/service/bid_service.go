@@ -9,26 +9,33 @@ import (
 	"tenders/internal/domain/repository"
 	"tenders/internal/interfaces/dto/request"
 	"tenders/internal/utils"
+	"tenders/internal/utils/common/custom_types"
+	"tenders/internal/utils/consts"
 	"time"
 )
 
 type BidService struct {
-	employeeRepo repository.EmployeeRepository
-	tenderRepo   repository.TenderRepository
-	bidRepo      repository.BidRepository
+	employeeRepo     repository.EmployeeRepository
+	organizationRepo repository.OrganizationRepository
+	tenderRepo       repository.TenderRepository
+	bidRepo          repository.BidRepository
 }
 
 func NewBidService(
-	bidRepo repository.BidRepository, tenderRepo repository.TenderRepository, employeeRepo repository.EmployeeRepository,
+	employeeRepo repository.EmployeeRepository,
+	organizationRepo repository.OrganizationRepository,
+	bidRepo repository.BidRepository,
+	tenderRepo repository.TenderRepository,
 ) interfaces.BidService {
 	return &BidService{
-		bidRepo:      bidRepo,
-		tenderRepo:   tenderRepo,
-		employeeRepo: employeeRepo,
+		organizationRepo: organizationRepo,
+		bidRepo:          bidRepo,
+		tenderRepo:       tenderRepo,
+		employeeRepo:     employeeRepo,
 	}
 }
 
-func (s *BidService) Create(request *request.BidRequest) (*entity.Bid, error) {
+func (s *BidService) CreateNewBid(request *request.BidRequest) (*entity.Bid, error) {
 	bid, err := request.MapToBid()
 	if err != nil {
 		return nil, err
@@ -42,7 +49,7 @@ func (s *BidService) Create(request *request.BidRequest) (*entity.Bid, error) {
 		return nil, err
 	}
 
-	if request.AuthorType == entity.USER {
+	if request.AuthorType == consts.AuthorTypeUser {
 		_, err = s.employeeRepo.FindById(bid.AuthorId)
 	} else {
 		_, err = s.employeeRepo.FindOrgById(bid.AuthorId)
@@ -54,13 +61,11 @@ func (s *BidService) Create(request *request.BidRequest) (*entity.Bid, error) {
 		return nil, err
 	}
 
-	if bid.BidId == uuid.Nil {
-		bid.BidId = uuid.New()
-		bid.Version = 1
-	}
+	bid.BidId = uuid.New()
+	bid.Version = 1
 	bid.TenderVersion = tender.Version
-	bid.CreatedAt = time.Now().Format(time.RFC3339)
-	bid.Status = entity.CREATED
+	bid.CreatedAt = custom_types.RFC3339Time(time.Now())
+	bid.Status = consts.BidCreated
 
 	return s.bidRepo.Create(bid)
 }
@@ -74,7 +79,14 @@ func (s *BidService) FindAllByEmployeeUsername(username string, limit, offset in
 		return nil, err
 	}
 
-	return s.bidRepo.FindAllByEmployeeId(employeeId, limit, offset)
+	organization, err := s.organizationRepo.FindByEmployeeId(employeeId)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	return s.bidRepo.FindAllByEmployeeIdAndOrgId(employeeId, organization.Id, limit, offset)
 }
 
 func (s *BidService) specifyEmployeeVerificationError(username string, err error) error {
@@ -118,15 +130,99 @@ func (s *BidService) GetStatusByBidId(bidId uuid.UUID, username string) (string,
 		return "", err
 	}
 
-	tender, err := s.tenderRepo.FindByTenderId(bid.TenderId)
+	employeeId, err := s.employeeRepo.FindEmployeeIdByUsername(username)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", utils.UserNotExistsError
+		}
 		return "", err
 	}
 
-	_, err = s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, tender.OrganizationID)
-	if err != nil {
-		err = s.specifyEmployeeVerificationError(username, err)
-		return "", err
+	// Если создал юзер
+	if bid.AuthorType == consts.AuthorTypeUser {
+		if bid.AuthorId != employeeId {
+			return "", utils.UnauthorizedAccessError
+		}
+		return bid.Status, nil
+	} else {
+		// Если создала организация
+		org, err := s.organizationRepo.FindByEmployeeId(employeeId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return "", utils.UnauthorizedAccessError
+			}
+			return "", err
+		}
+		if bid.AuthorId != org.Id {
+			return "", utils.UnauthorizedAccessError
+		}
+
+		return bid.Status, nil
 	}
-	return bid.Status, nil
+}
+
+func (s *BidService) UpdateStatus(bidId uuid.UUID, status string, username string) (*entity.Bid, error) {
+	tx, err := s.bidRepo.BeginTransaction()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	bid, err := s.bidRepo.FindByBidId(bidId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.BidNotExistsError
+		}
+		return nil, err
+	}
+
+	employeeId, err := s.employeeRepo.FindEmployeeIdByUsername(username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.UserNotExistsError
+		}
+		return nil, err
+	}
+
+	if bid.AuthorType == consts.AuthorTypeUser {
+		if bid.AuthorId != employeeId {
+			return nil, utils.UnauthorizedAccessError
+		}
+	} else {
+		org, err := s.organizationRepo.FindByEmployeeId(employeeId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, utils.UnauthorizedAccessError
+			}
+			return nil, err
+		}
+		if bid.AuthorId != org.Id {
+			return nil, utils.UnauthorizedAccessError
+		}
+	}
+
+	err = s.bidRepo.SaveHistoricalVersionTx(tx, bid)
+	if err != nil {
+		return nil, err
+	}
+
+	bid.Status = status
+	bid.Version += 1
+
+	err = s.bidRepo.UpdateStatusAndVersionTx(tx, bidId, status, bid.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return bid, nil
 }

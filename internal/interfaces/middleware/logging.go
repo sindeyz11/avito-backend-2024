@@ -1,11 +1,10 @@
 package middleware
 
 import (
+	"github.com/urfave/negroni"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/urfave/negroni"
 )
 
 func Logging(next http.Handler) http.Handler {

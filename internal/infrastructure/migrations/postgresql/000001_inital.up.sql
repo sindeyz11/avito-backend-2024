@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS tender
     name            VARCHAR(100)        NOT NULL,
     description     VARCHAR(500),
     service_type    tender_service_type NOT NULL,
-    status          tender_status         NOT NULL DEFAULT 'Created',
+    status          tender_status       NOT NULL DEFAULT 'Created',
     version         INT                 NOT NULL DEFAULT 1,
     organization_id UUID REFERENCES organization (id) ON DELETE CASCADE,
     creator_id      UUID                REFERENCES employee (id) ON DELETE SET NULL,
@@ -75,7 +75,7 @@ CREATE TYPE bid_status AS ENUM (
 
 CREATE TABLE IF NOT EXISTS bid
 (
-    bid_id         UUID                  DEFAULT uuid_generate_v4() NOT NULL,
+    bid_id         UUID PRIMARY KEY      DEFAULT uuid_generate_v4() NOT NULL,
     name           VARCHAR(100) NOT NULL,
     description    VARCHAR(500),
     status         status_enum  NOT NULL DEFAULT 'Created',
@@ -85,12 +85,26 @@ CREATE TABLE IF NOT EXISTS bid
     author_id      UUID,
     version        INT          NOT NULL DEFAULT 1,
     created_at     TIMESTAMP             DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tender_id, tender_version)
+        REFERENCES tender (tender_id, version)
+        ON DELETE CASCADE
+);
 
-    PRIMARY KEY (bid_id, version),
-
+CREATE TABLE IF NOT EXISTS bid_history
+(
+    bid_id         UUID DEFAULT uuid_generate_v4() NOT NULL,
+    name           VARCHAR(100)                    NOT NULL,
+    description    VARCHAR(500),
+    status         status_enum                     NOT NULL,
+    tender_id      UUID                            NOT NULL,
+    tender_version INT                             NOT NULL,
+    author_type    VARCHAR(50)                     NOT NULL,
+    author_id      UUID,
+    version        INT                             NOT NULL,
+    created_at     TIMESTAMP,
     FOREIGN KEY (tender_id, tender_version)
         REFERENCES tender (tender_id, version)
         ON DELETE CASCADE,
-
+    PRIMARY KEY (bid_id, version),
     UNIQUE (bid_id, version)
 );

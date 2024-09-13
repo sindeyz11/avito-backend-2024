@@ -3,6 +3,7 @@ package request
 import (
 	"tenders/internal/domain/entity"
 	"tenders/internal/utils"
+	"tenders/internal/utils/consts"
 )
 
 type EditTenderRequest struct {
@@ -33,7 +34,7 @@ func (request EditTenderRequest) MapToTender(tender *entity.Tender) error {
 	switch request.ServiceType {
 	case "":
 		// Если не передан, оставляем текущее значение
-	case entity.CONSTRUCTION, entity.DELIVERY, entity.MANUFACTURE:
+	case consts.Construction, consts.Delivery, consts.Manufacture:
 		tender.ServiceType = request.ServiceType
 	default:
 		errorFields = append(errorFields, "serviceType")

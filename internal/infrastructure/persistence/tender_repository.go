@@ -25,12 +25,15 @@ func (r *TenderRepo) Create(tender *entity.Tender) (*entity.Tender, error) {
             name, description, service_type, status,
             organization_id, creator_id, created_at, tender_id, version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING created_at
     `
-	_, err := r.Conn.Exec(insertQuery,
+	created := tender.CreatedAt.ConvertToTime()
+
+	err := r.Conn.QueryRow(insertQuery,
 		tender.Name, tender.Description, tender.ServiceType, tender.Status, tender.OrganizationID,
-		tender.CreatorID, tender.CreatedAt, tender.TenderId, tender.Version,
-	)
+		tender.CreatorID, created, tender.TenderId, tender.Version,
+	).Scan(&tender.CreatedAt)
+
 	if err != nil {
 		return nil, err
 	}

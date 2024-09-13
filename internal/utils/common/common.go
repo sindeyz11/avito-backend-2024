@@ -55,13 +55,20 @@ func ValidateTenderStatus(status string) error {
 	return nil
 }
 
-func GetTenderUUIDFromRequestPath(r *http.Request) (uuid.UUID, error) {
-	tenderIdStr := r.PathValue("tenderId")
-	tenderId, err := uuid.Parse(tenderIdStr)
+func ValidateBidStatus(status string) error {
+	if !entity.ValidBidStatuses[status] {
+		return errors.New("указан некорректный статус предложения: " + status)
+	}
+	return nil
+}
+
+func GetUUIDFromRequestPath(r *http.Request, pathValue string) (uuid.UUID, error) {
+	uuidStr := r.PathValue(pathValue)
+	id, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	return tenderId, nil
+	return id, nil
 }
 
 func GetVersionFromRequestPath(r *http.Request) (int, error) {

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"tenders/internal/domain/entity"
 	"tenders/internal/utils"
+	"tenders/internal/utils/consts"
 )
 
 type BidRequest struct {
@@ -26,7 +27,7 @@ func (bidRequest BidRequest) MapToBid() (*entity.Bid, error) {
 		errorFields = append(errorFields, "description")
 	}
 
-	if bidRequest.AuthorType != entity.ORGANIZATION && bidRequest.AuthorType != entity.USER {
+	if bidRequest.AuthorType != consts.AuthorTypeOrganization && bidRequest.AuthorType != consts.AuthorTypeUser {
 		errorFields = append(errorFields, "authorType")
 	}
 

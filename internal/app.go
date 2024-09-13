@@ -21,7 +21,9 @@ func Run() {
 	tenderService := service.NewTenderService(repositories.TenderRepo, repositories.EmployeeRepo)
 	tenderHandler := handlers.NewTenderHandler(tenderService)
 
-	bidService := service.NewBidService(repositories.BidRepo, repositories.TenderRepo, repositories.EmployeeRepo)
+	bidService := service.NewBidService(
+		repositories.EmployeeRepo, repositories.OrganizationRepo, repositories.BidRepo, repositories.TenderRepo,
+	)
 	bidHandler := handlers.NewBidHandler(bidService)
 
 	mux.HandleFunc("GET /api/ping", handlers.Ping)
@@ -40,8 +42,8 @@ func Run() {
 	mux.HandleFunc("GET /api/bids/my", bidHandler.GetAllBidsByUsername)
 	mux.HandleFunc("GET /api/bids/{tenderId}/list", bidHandler.GetAllBidsByTender)
 	mux.HandleFunc("GET /api/bids/{bidId}/status", bidHandler.GetBidStatusById)
+	mux.HandleFunc("PUT /api/bids/{bidId}/status", bidHandler.UpdateBidStatusById)
 
-	mux.HandleFunc("PUT /api/bids/{bidId}/status", handlers.Ping)
 	mux.HandleFunc("PATCH /api/bids/{bidId}/edit", handlers.Ping)
 	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", handlers.Ping)
 	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", handlers.Ping)

@@ -4,13 +4,13 @@ import (
 	"github.com/google/uuid"
 	"tenders/internal/domain/entity"
 	"tenders/internal/utils"
+	"tenders/internal/utils/consts"
 )
 
 type TenderRequest struct {
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
 	ServiceType     string    `json:"serviceType"`
-	Status          string    `json:"status"` //todo
 	OrganizationID  uuid.UUID `json:"organizationId"`
 	CreatorUsername string    `json:"creatorUsername"`
 }
@@ -27,16 +27,10 @@ func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 		errorFields = append(errorFields, "description")
 	}
 
-	if tenderRequest.ServiceType != entity.CONSTRUCTION &&
-		tenderRequest.ServiceType != entity.DELIVERY &&
-		tenderRequest.ServiceType != entity.MANUFACTURE {
+	if tenderRequest.ServiceType != consts.Construction &&
+		tenderRequest.ServiceType != consts.Delivery &&
+		tenderRequest.ServiceType != consts.Manufacture {
 		errorFields = append(errorFields, "serviceType")
-	}
-
-	if tenderRequest.Status != entity.CREATED &&
-		tenderRequest.Status != entity.PUBLISHED &&
-		tenderRequest.Status != entity.CLOSED {
-		errorFields = append(errorFields, "status")
 	}
 
 	if tenderRequest.OrganizationID.String() == "" {
@@ -51,7 +45,6 @@ func (tenderRequest TenderRequest) MapToTender() (*entity.Tender, error) {
 		Name:           tenderRequest.Name,
 		Description:    tenderRequest.Description,
 		ServiceType:    tenderRequest.ServiceType,
-		Status:         tenderRequest.Status,
 		OrganizationID: tenderRequest.OrganizationID,
 	}
 	return &tender, nil

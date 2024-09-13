@@ -9,6 +9,8 @@ import (
 	"tenders/internal/domain/repository"
 	"tenders/internal/interfaces/dto/request"
 	"tenders/internal/utils"
+	"tenders/internal/utils/common/custom_types"
+	"tenders/internal/utils/consts"
 	"time"
 )
 
@@ -88,9 +90,10 @@ func (s *TenderService) Create(tenderRequest *request.TenderRequest) (*entity.Te
 	if tender.TenderId == uuid.Nil {
 		tender.TenderId = uuid.New()
 		tender.Version = 1
+		tender.Status = consts.TenderCreated
+		tender.CreatorID = employeeId
+		tender.CreatedAt = custom_types.RFC3339Time(time.Now())
 	}
-	tender.CreatorID = employeeId
-	tender.CreatedAt = time.Now()
 
 	return s.tenderRepo.Create(tender)
 }
@@ -105,7 +108,7 @@ func (s *TenderService) GetStatusByTenderId(tenderId uuid.UUID, username string)
 	}
 
 	if username == "" {
-		if tender.Status != entity.PUBLISHED {
+		if tender.Status != consts.TenderPublished {
 			return "", utils.UnauthorizedAccessError
 		}
 		return tender.Status, nil

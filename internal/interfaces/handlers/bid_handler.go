@@ -28,7 +28,7 @@ func (h *BidHandler) CreateBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bid, err := h.service.Create(&bidRequest)
+	bid, err := h.service.CreateNewBid(&bidRequest)
 	if err != nil {
 		if errors.Is(err, utils.ElementNotExistsError) {
 			common.RespondWithError(w, http.StatusUnauthorized, consts.UserOrOrgNotExists)
@@ -58,7 +58,6 @@ func (h *BidHandler) GetAllBidsByUsername(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// todo с юзером
 	tenders, err := h.service.FindAllByEmployeeUsername(username, limit, offset)
 	if err != nil {
 		if errors.Is(err, utils.UserNotExistsError) {
@@ -73,7 +72,7 @@ func (h *BidHandler) GetAllBidsByUsername(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BidHandler) GetAllBidsByTender(w http.ResponseWriter, r *http.Request) {
-	tenderId, err := common.GetTenderUUIDFromRequestPath(r)
+	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
 		return
@@ -91,7 +90,6 @@ func (h *BidHandler) GetAllBidsByTender(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// todo с юзером
 	bids, err := h.service.FindAllByTenderId(tenderId, username, limit, offset)
 	if err != nil {
 		if errors.Is(err, utils.TenderNotExistsError) {
@@ -123,7 +121,6 @@ func (h *BidHandler) GetBidStatusById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo с юзером
 	status, err := h.service.GetStatusByBidId(bidId, username)
 	if err != nil {
 		if errors.Is(err, utils.BidNotExistsError) {
@@ -142,4 +139,39 @@ func (h *BidHandler) GetBidStatusById(w http.ResponseWriter, r *http.Request) {
 	if _, err = w.Write([]byte(status)); err != nil {
 		common.RespondWithError(w, http.StatusInternalServerError, consts.FailedToWriteResponse)
 	}
+}
+func (h *BidHandler) UpdateBidStatusById(w http.ResponseWriter, r *http.Request) {
+	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
+	if err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	status := r.URL.Query().Get("status")
+	err = common.ValidateBidStatus(status)
+	if status == "" || err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectStatus)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	bid, err := h.service.UpdateStatus(bidId, status, username)
+	if err != nil {
+		if errors.Is(err, utils.BidNotExistsError) {
+			common.RespondWithError(w, http.StatusNotFound, consts.BidNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
+		}
+		return
+	}
+	common.RespondOKWithJson(w, bid)
 }

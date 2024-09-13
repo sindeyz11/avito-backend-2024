@@ -7,4 +7,5 @@ import (
 
 type OrganizationRepository interface {
 	FindById(id uuid.UUID) (*entity.Organization, error)
+	FindByEmployeeId(employeeId uuid.UUID) (*entity.Organization, error)
 }

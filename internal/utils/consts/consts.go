@@ -1,6 +1,21 @@
 package consts
 
 const (
+	Construction string = "Construction"
+	Delivery     string = "Delivery"
+	Manufacture  string = "Manufacture"
+
+	TenderCreated   string = "Created"
+	TenderPublished string = "Published"
+	TenderClosed    string = "Closed"
+
+	AuthorTypeOrganization string = "Organization"
+	AuthorTypeUser         string = "User"
+
+	BidCreated   string = "Created"
+	BidPublished string = "Published"
+	BidCanceled  string = "Canceled"
+
 	IncorrectRequestBody    string = "Некорректное тело запроса"
 	InternalServerError     string = "Неизвестная ошибка сервера"
 	InsufficientPermissions string = "У вас недостаточно прав для выполнения данного запроса"
@@ -10,7 +25,8 @@ const (
 	NoUsernameParamPresent     string = "Не задан username пользователя"
 	IncorrectVersion           string = "Версия указана не числом"
 	IncorrectTenderId          string = "Id тендера должно быть в формате uuid"
-	IncorrectTenderStatus      string = "Статус не указан либо указан некорректный"
+	IncorrectBidId             string = "Id предложения должно быть в формате uuid"
+	IncorrectStatus            string = "Статус не указан либо указан некорректный"
 
 	UserNotExists            string = "Пользователь не существует или некорректен для данного запроса"
 	UserOrOrgNotExists       string = "Пользователь или организация не существует"

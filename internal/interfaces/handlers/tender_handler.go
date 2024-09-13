@@ -128,7 +128,7 @@ func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Request) {
-	tenderId, err := common.GetTenderUUIDFromRequestPath(r)
+	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
 		return
@@ -137,7 +137,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 	status := r.URL.Query().Get("status")
 	err = common.ValidateTenderStatus(status)
 	if status == "" || err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderStatus)
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectStatus)
 		return
 	}
 
@@ -165,7 +165,7 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 }
 
 func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
-	tenderId, err := common.GetTenderUUIDFromRequestPath(r)
+	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
 		return
@@ -201,7 +201,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
-	tenderId, err := common.GetTenderUUIDFromRequestPath(r)
+	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
 		return
