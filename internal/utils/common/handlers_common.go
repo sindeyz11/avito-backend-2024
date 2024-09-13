@@ -2,8 +2,11 @@ package common
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"tenders/internal/interfaces/dto/response"
+	"tenders/internal/utils"
 	"tenders/internal/utils/consts"
 )
 
@@ -49,4 +52,28 @@ func CheckForExtraParams(r *http.Request, expectedParams []string) bool {
 
 	// Нет лишних параметров
 	return false
+}
+
+func DecodeAndValidateJSON(body io.Reader, v interface{}) error {
+	var rawRequest map[string]interface{}
+	if err := json.NewDecoder(body).Decode(&rawRequest); err != nil {
+		return utils.IncorrectRequestBody
+	}
+
+	rawRequestBytes, err := json.Marshal(rawRequest)
+	if err != nil {
+		return utils.IncorrectRequestBody
+	}
+
+	dec := json.NewDecoder(strings.NewReader(string(rawRequestBytes)))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(v); err != nil {
+		if _, ok := err.(*json.UnmarshalTypeError); ok || strings.Contains(err.Error(), "unknown field") {
+			return utils.IncorrectRequestBody
+		}
+		return utils.IncorrectRequestBody
+	}
+
+	return nil
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"net/http"
@@ -23,7 +22,7 @@ func NewBidHandler(service interfaces.BidService) *BidHandler {
 
 func (h *BidHandler) CreateBid(w http.ResponseWriter, r *http.Request) {
 	var bidRequest request.BidRequest
-	if err := json.NewDecoder(r.Body).Decode(&bidRequest); err != nil {
+	if err := common.DecodeAndValidateJSON(r.Body, &bidRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}
@@ -190,7 +189,7 @@ func (h *BidHandler) EditBid(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var updateRequest request.EditBidRequest
-	if err = json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+	if err := common.DecodeAndValidateJSON(r.Body, &updateRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}

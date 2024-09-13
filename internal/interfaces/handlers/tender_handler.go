@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"net/http"
@@ -24,7 +23,7 @@ func NewTenderHandler(service interfaces.TenderService) *TenderHandler {
 
 func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 	var tenderRequest request.TenderRequest
-	if err := json.NewDecoder(r.Body).Decode(&tenderRequest); err != nil {
+	if err := common.DecodeAndValidateJSON(r.Body, &tenderRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}
@@ -176,7 +175,7 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var updateRequest request.EditTenderRequest
-	if err = json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+	if err := common.DecodeAndValidateJSON(r.Body, &updateRequest); err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectRequestBody)
 		return
 	}

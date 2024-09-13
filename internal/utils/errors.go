@@ -7,6 +7,7 @@ import (
 
 var (
 	UnauthorizedAccessError = errors.New("unauthorized access")
+	IncorrectRequestBody    = errors.New("incorrect request body")
 
 	ElementNotExistsError      = errors.New("element not exist")
 	TenderNotExistsError       = errors.New("tender not exist")
