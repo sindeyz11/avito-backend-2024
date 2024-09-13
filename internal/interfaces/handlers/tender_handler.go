@@ -46,7 +46,6 @@ func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 	common.RespondOKWithJson(w, tender)
 }
 
-// TODO мб надо добавить фильтр по PUBLISHED
 func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 	serviceTypeFilter, err := common.GetServiceTypeFilter(r)
 	if err != nil {

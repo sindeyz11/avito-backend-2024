@@ -16,6 +16,9 @@ const (
 	BidPublished string = "Published"
 	BidCanceled  string = "Canceled"
 
+	BidApproved string = "Approved"
+	BidRejected string = "Rejected"
+
 	IncorrectRequestBody    string = "Некорректное тело запроса"
 	InternalServerError     string = "Неизвестная ошибка сервера"
 	InsufficientPermissions string = "У вас недостаточно прав для выполнения данного запроса"
@@ -23,6 +26,7 @@ const (
 
 	IncorrectLimitOffsetParams string = "Некорректно задан limit или/и offset"
 	NoUsernameParamPresent     string = "Не задан username пользователя"
+	IncorrectDecision          string = "Некорректно задано решение, варианты: Approved, Rejected"
 	IncorrectVersion           string = "Версия указана не числом"
 	IncorrectTenderId          string = "Id тендера должно быть в формате uuid"
 	IncorrectBidId             string = "Id предложения должно быть в формате uuid"

@@ -45,8 +45,7 @@ func Run() {
 	mux.HandleFunc("PUT /api/bids/{bidId}/status", bidHandler.UpdateBidStatusById)
 	mux.HandleFunc("PATCH /api/bids/{bidId}/edit", bidHandler.EditBid)
 	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", bidHandler.RollbackBid)
-
-	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", handlers.Ping)
+	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", bidHandler.SubmitDecision)
 
 	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", handlers.Ping)
 	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", handlers.Ping)

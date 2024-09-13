@@ -14,4 +14,5 @@ type BidService interface {
 	UpdateStatus(bidId uuid.UUID, status string, username string) (*entity.Bid, error)
 	EditBid(bidId uuid.UUID, username string, updateRequest *request.EditBidRequest) (*entity.Bid, error)
 	RollbackBid(bidId uuid.UUID, version int, username string) (*entity.Bid, error)
+	SubmitDecision(bidId uuid.UUID, username, decision string) (*entity.Bid, error)
 }

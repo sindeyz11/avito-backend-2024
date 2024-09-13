@@ -350,20 +350,49 @@ func (s *BidService) RollbackBid(bidId uuid.UUID, version int, username string) 
 		return nil, err
 	}
 
-	err = s.bidRepo.SaveHistoricalVersionTx(tx, currentBid)
-	if err != nil {
+	if err = s.bidRepo.SaveHistoricalVersionTx(tx, currentBid); err != nil {
 		return nil, err
 	}
 
 	historicalBid.Version = currentBid.Version + 1
-	err = s.bidRepo.UpdateBidTx(tx, historicalBid)
-	if err != nil {
-		return nil, err
-	}
 
-	if err != nil {
+	if err = s.bidRepo.UpdateBidTx(tx, historicalBid); err != nil {
 		return nil, err
 	}
 
 	return historicalBid, nil
+}
+
+func (s *BidService) SubmitDecision(bidId uuid.UUID, username, decision string) (*entity.Bid, error) {
+	bid, err := s.bidRepo.FindByBidId(bidId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.BidNotExistsError
+		}
+		return nil, err
+	}
+
+	tender, err := s.tenderRepo.FindByTenderId(bid.TenderId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, utils.TenderNotExistsError
+		}
+		return nil, err
+	}
+
+	_, err = s.employeeRepo.FindEmployeeIdByUsernameIfResponsibleForOrg(username, tender.OrganizationID)
+	if err != nil {
+		return nil, s.specifyEmployeeVerificationError(username, err)
+	}
+
+	if decision == consts.BidApproved {
+		tender.Status = consts.TenderClosed
+		tender.Version = tender.Version + 1
+		_, err = s.tenderRepo.Create(tender)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return bid, nil
 }

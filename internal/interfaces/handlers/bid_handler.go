@@ -247,3 +247,38 @@ func (h *BidHandler) RollbackBid(w http.ResponseWriter, r *http.Request) {
 	}
 	common.RespondOKWithJson(w, updatedBid)
 }
+
+func (h *BidHandler) SubmitDecision(w http.ResponseWriter, r *http.Request) {
+	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
+	if err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
+		return
+	}
+
+	decision := r.URL.Query().Get("decision")
+	if decision != consts.BidApproved && decision != consts.BidRejected {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectDecision)
+		return
+	}
+
+	updatedBid, err := h.service.SubmitDecision(bidId, username, decision)
+	if err != nil {
+		if errors.Is(err, utils.BidNotExistsError) {
+			common.RespondWithError(w, http.StatusNotFound, consts.BidNotExists)
+		} else if errors.Is(err, utils.UnauthorizedAccessError) {
+			common.RespondWithError(w, http.StatusForbidden, consts.InsufficientPermissions)
+		} else if errors.Is(err, utils.UserNotExistsError) {
+			common.RespondWithError(w, http.StatusUnauthorized, consts.UserNotExists)
+		} else {
+			common.RespondWithError(w, http.StatusInternalServerError, consts.InternalServerError+" "+err.Error())
+		}
+		return
+	}
+	common.RespondOKWithJson(w, updatedBid)
+}
