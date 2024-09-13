@@ -27,6 +27,11 @@ func (h *BidHandler) CreateBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	bid, err := h.service.CreateNewBid(&bidRequest)
 	if err != nil {
 		if errors.Is(err, utils.ElementNotExistsError) {
@@ -45,6 +50,11 @@ func (h *BidHandler) CreateBid(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BidHandler) GetAllBidsByUsername(w http.ResponseWriter, r *http.Request) {
+	if common.CheckForExtraParams(r, []string{"username", "limit", "offset"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
@@ -74,6 +84,11 @@ func (h *BidHandler) GetAllBidsByTender(w http.ResponseWriter, r *http.Request) 
 	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"username", "limit", "offset"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 
@@ -114,6 +129,11 @@ func (h *BidHandler) GetBidStatusById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{"username"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
@@ -143,6 +163,11 @@ func (h *BidHandler) UpdateBidStatusById(w http.ResponseWriter, r *http.Request)
 	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"username", "status"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 
@@ -182,6 +207,11 @@ func (h *BidHandler) EditBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{"username"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
@@ -214,6 +244,11 @@ func (h *BidHandler) RollbackBid(w http.ResponseWriter, r *http.Request) {
 	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"username", "version"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 
@@ -251,6 +286,11 @@ func (h *BidHandler) SubmitDecision(w http.ResponseWriter, r *http.Request) {
 	bidId, err := common.GetUUIDFromRequestPath(r, "bidId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectBidId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"decision", "username"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 

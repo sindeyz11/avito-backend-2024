@@ -58,6 +58,11 @@ func (h *ReviewHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ReviewHandler) GetReviewsList(w http.ResponseWriter, r *http.Request) {
+	if common.CheckForExtraParams(r, []string{"authorUsername", "requesterUsername", "limit", "offset"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)

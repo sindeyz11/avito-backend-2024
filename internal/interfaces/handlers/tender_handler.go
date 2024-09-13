@@ -28,6 +28,11 @@ func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	tender, err := h.service.Create(&tenderRequest)
 	if err != nil {
 		if errors.Is(err, utils.UserNotExistsError) {
@@ -46,6 +51,11 @@ func (h *TenderHandler) CreateTender(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
+	if common.CheckForExtraParams(r, []string{"service_type", "limit", "offset"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	serviceTypeFilter, err := common.GetServiceTypeFilter(r)
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -68,6 +78,11 @@ func (h *TenderHandler) GetAllTenders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TenderHandler) GetAllTendersByUsername(w http.ResponseWriter, r *http.Request) {
+	if common.CheckForExtraParams(r, []string{"username", "limit", "offset"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
@@ -101,6 +116,10 @@ func (h *TenderHandler) GetTenderStatusById(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{"username"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
 	username := r.URL.Query().Get("username")
 
 	status, err := h.service.GetStatusByTenderId(tenderId, username)
@@ -128,6 +147,11 @@ func (h *TenderHandler) UpdateTenderStatusById(w http.ResponseWriter, r *http.Re
 	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"username", "status"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 
@@ -168,6 +192,11 @@ func (h *TenderHandler) EditTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if common.CheckForExtraParams(r, []string{"username"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
+		return
+	}
+
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		common.RespondWithError(w, http.StatusBadRequest, consts.NoUsernameParamPresent)
@@ -201,6 +230,11 @@ func (h *TenderHandler) RollbackTender(w http.ResponseWriter, r *http.Request) {
 	tenderId, err := common.GetUUIDFromRequestPath(r, "tenderId")
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectTenderId)
+		return
+	}
+
+	if common.CheckForExtraParams(r, []string{"username", "version"}) {
+		common.RespondWithError(w, http.StatusBadRequest, consts.IncorrectParams)
 		return
 	}
 
