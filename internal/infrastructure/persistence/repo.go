@@ -10,6 +10,7 @@ type Repositories struct {
 	EmployeeRepo     repository.EmployeeRepository
 	OrganizationRepo repository.OrganizationRepository
 	BidRepo          repository.BidRepository
+	ReviewRepo       repository.ReviewRepository
 	Db               *sql.DB
 }
 
@@ -19,6 +20,7 @@ func NewRepositories(conn *sql.DB) *Repositories {
 		EmployeeRepo:     NewEmployeeRepository(conn),
 		OrganizationRepo: NewOrganizationRepository(conn),
 		BidRepo:          NewBidRepository(conn),
+		ReviewRepo:       NewReviewRepository(conn),
 		Db:               conn,
 	}
 }

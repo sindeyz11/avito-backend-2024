@@ -18,4 +18,5 @@ type BidRepository interface {
 	UpdateBidTx(tx *sql.Tx, bid *entity.Bid) error
 	FindByBidIdTx(tx *sql.Tx, bidId uuid.UUID) (*entity.Bid, error)
 	FindVersionInHistoryTx(tx *sql.Tx, bidId uuid.UUID, version int) (*entity.Bid, error)
+	FindByAuthorAndTender(authorId uuid.UUID, tenderId uuid.UUID) (*entity.Bid, error)
 }

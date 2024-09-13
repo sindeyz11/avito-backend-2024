@@ -190,3 +190,23 @@ func (r *TenderRepo) FindLatestVersionByTenderId(tenderId uuid.UUID) (int, error
 	}
 	return version, nil
 }
+
+func (r *TenderRepo) CheckEmployeeAccessToTender(employeeId uuid.UUID, tenderId uuid.UUID) (bool, error) {
+	query := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM tender t
+			INNER JOIN organization o ON t.organization_id = o.id
+			INNER JOIN organization_responsible orp ON o.id = orp.organization_id
+			WHERE orp.user_id = $1 AND t.tender_id = $2
+		);
+	`
+
+	var hasAccess bool
+	err := r.Conn.QueryRow(query, employeeId, tenderId).Scan(&hasAccess)
+	if err != nil {
+		return false, err
+	}
+
+	return hasAccess, nil
+}

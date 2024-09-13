@@ -12,4 +12,5 @@ type TenderRepository interface {
 	FindByTenderId(id uuid.UUID) (*entity.Tender, error)
 	FindByTenderIdAndVersion(tenderId uuid.UUID, version int) (*entity.Tender, error)
 	FindLatestVersionByTenderId(tenderId uuid.UUID) (int, error)
+	CheckEmployeeAccessToTender(employeeId uuid.UUID, tenderId uuid.UUID) (bool, error)
 }

@@ -253,3 +253,21 @@ func (r *BidRepo) FindVersionInHistoryTx(tx *sql.Tx, bidId uuid.UUID, version in
 	}
 	return &bid, nil
 }
+
+func (r *BidRepo) FindByAuthorAndTender(authorId uuid.UUID, tenderId uuid.UUID) (*entity.Bid, error) {
+	query := `
+        SELECT bid_id, name, description, status, tender_id,
+               tender_version, author_type, author_id, version, created_at
+        FROM bid
+        WHERE author_id = $1 AND tender_id = $2
+    `
+	var bid entity.Bid
+	err := r.Conn.QueryRow(query, authorId, tenderId).Scan(
+		&bid.BidId, &bid.Name, &bid.Description, &bid.Status, &bid.TenderId,
+		&bid.TenderVersion, &bid.AuthorType, &bid.AuthorId, &bid.Version, &bid.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &bid, nil
+}

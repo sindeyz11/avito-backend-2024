@@ -26,6 +26,12 @@ func Run() {
 	)
 	bidHandler := handlers.NewBidHandler(bidService)
 
+	reviewService := service.NewReviewService(
+		repositories.EmployeeRepo, repositories.OrganizationRepo,
+		repositories.BidRepo, repositories.TenderRepo, repositories.ReviewRepo,
+	)
+	feedbackHandler := handlers.NewReviewHandler(reviewService)
+
 	mux.HandleFunc("GET /api/ping", handlers.Ping)
 
 	// tenders
@@ -47,8 +53,9 @@ func Run() {
 	mux.HandleFunc("PUT /api/bids/{bidId}/rollback/{version}", bidHandler.RollbackBid)
 	mux.HandleFunc("PUT /api/bids/{bidId}/submit_decision", bidHandler.SubmitDecision)
 
-	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", handlers.Ping)
-	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", handlers.Ping)
+	// feedback
+	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", feedbackHandler.ReviewsList)
+	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", feedbackHandler.SubmitFeedback)
 
 	fmt.Printf("Starting server on http://0.0.0.0:8080/\n")
 
