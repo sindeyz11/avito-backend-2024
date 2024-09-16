@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE employee
+CREATE TABLE IF NOT EXISTS employee
 (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username   VARCHAR(50) UNIQUE NOT NULL,
@@ -26,7 +26,7 @@ $$
     END
 $$;
 
-CREATE TABLE organization
+CREATE TABLE IF NOT EXISTS organization
 (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name        VARCHAR(100) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE organization
     updated_at  TIMESTAMP        DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE organization_responsible
+CREATE TABLE IF NOT EXISTS organization_responsible
 (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID REFERENCES organization (id) ON DELETE CASCADE,
