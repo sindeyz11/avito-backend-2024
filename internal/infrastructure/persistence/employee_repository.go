@@ -59,17 +59,3 @@ func (r *EmployeeRepo) FindById(id uuid.UUID) (*entity.Employee, error) {
 
 	return &employee, nil
 }
-
-func (r *EmployeeRepo) FindOrgById(id uuid.UUID) (*entity.Organization, error) {
-	query := `SELECT id, name, description, type, created_at, updated_at FROM organization WHERE id = $1`
-
-	row := r.Conn.QueryRow(query, id)
-
-	var org entity.Organization
-	err := row.Scan(&org.Id, &org.Name, &org.Description, &org.Type, &org.CreatedAt, &org.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	return &org, nil
-}

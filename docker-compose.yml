@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./cmd/app:/app/cmd/app
+    environment:
+      POSTGRES_USERNAME: db_user
+      POSTGRES_PASSWORD: db_user_pass213
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: app_db
+      POSTGRES_HOST: database
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - myapp
+
+  database:
+    image: postgres:16.0-alpine3.18
+    environment:
+      - POSTGRES_DB=app_db
+      - POSTGRES_USER=db_user
+      - POSTGRES_PASSWORD=db_user_pass213
+    networks:
+      - myapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./internal/infrastructure/migrations/postgresql/000001_init.up.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h localhost" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+
+networks:
+  myapp:
+    driver: bridge

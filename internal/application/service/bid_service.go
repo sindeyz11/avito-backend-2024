@@ -54,7 +54,7 @@ func (s *BidService) CreateNewBid(request *request.BidRequest) (*entity.Bid, err
 	if request.AuthorType == consts.AuthorTypeUser {
 		_, err = s.employeeRepo.FindById(bid.AuthorId)
 	} else {
-		_, err = s.employeeRepo.FindOrgById(bid.AuthorId)
+		_, err = s.organizationRepo.FindById(bid.AuthorId)
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -88,7 +88,14 @@ func (s *BidService) FindAllByEmployeeUsername(username string, limit, offset in
 		}
 	}
 
-	return s.bidRepo.FindAllByEmployeeIdAndOrgId(employeeId, organization.Id, limit, offset)
+	var orgId uuid.UUID
+	if organization != nil {
+		orgId = organization.Id
+	} else {
+		orgId = uuid.Nil
+	}
+
+	return s.bidRepo.FindAllByEmployeeIdAndOrgId(employeeId, orgId, limit, offset)
 }
 
 func (s *BidService) specifyEmployeeVerificationError(username string, err error) error {
@@ -220,7 +227,7 @@ func (s *BidService) UpdateStatus(bidId uuid.UUID, status string, username strin
 	bid.Status = status
 	bid.Version += 1
 
-	err = s.bidRepo.UpdateStatusAndVersionTx(tx, bidId, status, bid.Version)
+	err = s.bidRepo.UpdateBidTx(tx, bid)
 	if err != nil {
 		return nil, err
 	}

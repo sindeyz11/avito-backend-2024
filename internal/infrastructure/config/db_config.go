@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
 
@@ -44,7 +43,7 @@ func (c *Config) PostgresConfig() *DatabaseConfig {
 
 func NewPostgresConn(c *DatabaseConfig) *sql.DB {
 	connStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
 		c.Username,
 		c.Password,
 		c.Host,

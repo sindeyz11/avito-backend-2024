@@ -31,7 +31,7 @@ func RespondOKWithJson(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-// CheckForExtraParams возвращает true, если есть лишние параметры
+// CheckForExtraParams возвращает true, если есть лишние параметры запроса
 func CheckForExtraParams(r *http.Request, expectedParams []string) bool {
 	expectedParamsMap := make(map[string]struct{}, len(expectedParams))
 	for _, param := range expectedParams {

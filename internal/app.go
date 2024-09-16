@@ -57,7 +57,7 @@ func Run() {
 	mux.HandleFunc("GET /api/bids/{tenderId}/reviews", feedbackHandler.GetReviewsList)
 	mux.HandleFunc("PUT /api/bids/{bidId}/feedback", feedbackHandler.SubmitFeedback)
 
-	fmt.Printf("Starting server on http://0.0.0.0:8080/\n")
+	fmt.Printf("Starting server on http://127.0.0.1:8080/\n")
 
 	if err := http.ListenAndServe(":8080", handler); err != nil {
 		log.Fatal(err)

@@ -206,16 +206,6 @@ func (r *BidRepo) SaveHistoricalVersionTx(tx *sql.Tx, bid *entity.Bid) error {
 	return err
 }
 
-func (r *BidRepo) UpdateStatusAndVersionTx(tx *sql.Tx, bidId uuid.UUID, status string, version int) error {
-	query := `
-		UPDATE bid
-		SET status = $1, version = $2
-		WHERE bid_id = $3
-	`
-	_, err := tx.Exec(query, status, version, bidId)
-	return err
-}
-
 func (r *BidRepo) UpdateBidTx(tx *sql.Tx, bid *entity.Bid) error {
 	query := `
 		UPDATE bid
